@@ -1,0 +1,91 @@
+.extra-sidebar {
+  position: fixed;
+  top: 0;
+  left: 5rem;
+  /* or use 5vw if that's what your main sidebar uses */
+  width: calc(100vw - 5rem);
+  /* prevent overflow */
+  height: 10vh;
+  background: linear-gradient(145deg, #3f0b65, #ab0808);
+
+  justify-content: center;
+  align-items: center;
+ 
+z-index: 999;
+}
+
+
+.input {
+  margin-top: 0.8rem;
+  border-radius: 25px;
+  font-weight: bolder;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  width: 60vw;
+  max-width: 600px;
+  min-width: 200px;
+position: relative;
+left:30px;
+  box-shadow: 0 0 10px 6px rgb(0, 0, 0);
+}
+
+img {
+  height: 50px;
+  width: 50px;
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+   width: 70%;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 1rem auto auto;
+  z-index: 10;
+}
+
+.search-results li {
+  display: flex;                 /* Make image + text side by side */
+  align-items: center;  
+  background: linear-gradient(135deg, #ff0000, #ccff00);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: bolder;
+  border: 3px solid rgb(0, 0, 0);
+  margin-bottom: 0.2rem;
+z-index: 1000;
+  box-sizing: border-box;
+
+}
+
+.search-results li img {
+  border-radius: 25px;
+    margin-right: 10px;   
+  
+}
+
+.search-results li:hover {
+  background:linear-gradient(135deg,white,black);
+}
+span{
+  position: relative;
+
+  margin-left: 0.5rem;
+}
+.hamburger{
+    z-index: 9999;
+    position: fixed;
+    top:0rem;
+    left:5rem;
+    padding:10px;
+    font-size:4rem;
+  color:rgb(1, 1, 1);
+  transition: all 0.3s ease;
+}
+.hamburger:hover{
+  transform: scale(1.3);
+}
+.close{
+  display: none;
+}

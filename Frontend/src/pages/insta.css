@@ -1,0 +1,247 @@
+.largecontainer {
+  
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  margin-left:100px;
+  margin-top: 10px;
+
+
+}
+
+
+.semicircle-menu {
+  width: 200px;
+  height: 100px;
+
+  background-color: #b3b2b2;
+  /* background color */
+  border-top-left-radius: 100px;
+  border-top-right-radius: 100px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+margin-left: 1.9rem;
+  margin-top: 55vh;
+  margin-right: 20px;
+  rotate: 90deg;
+  position: fixed;
+  overflow: hidden;
+ 
+  /* keeps icons inside */
+}
+
+
+.menu-icon {
+  position: absolute;
+  font-size: 3rem;
+  color: rgb(0, 0, 0);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.menu-icon:hover {
+  transform: scale(1.3);
+}
+
+/* Place 3 icons evenly on the semicircle arc using approximate angles */
+.menu-icon:nth-child(1) {
+  left: 10%;
+  top: 45%;
+
+
+}
+
+.menu-icon:nth-child(2) {
+  left: 40%;
+
+
+}
+
+.menu-icon:nth-child(3) {
+  left: 65%;
+  top: 43%;
+
+}
+
+
+.view:hover {
+  color: rgb(38, 38, 39);
+  cursor: pointer;
+}
+
+
+h2 {
+  position: relative;
+  top: -10px;
+}
+
+.inputarea {
+  background: linear-gradient(145deg, rgb(0, 0, 0), red);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 20px;
+  padding-right: 20px;
+  padding-left: 20px;
+  padding-top: 20px;
+  border-radius: 25px;
+  font-size: 60px;
+position: relative;
+right:10px;
+  margin:30vh auto 0 auto;
+
+
+
+}
+
+.imgg {
+  color: rgb(0, 0, 0);
+  font-size: 2.3rem;
+  position: relative;
+  top: 8px;
+  margin: 10px;
+}
+.addd{
+    transition: all 0.3s ease;
+}
+.addd:hover{
+  transform: scale(1.3);
+}
+.viewarea {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* responsive */
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  justify-items: center;
+  padding-left: 100px; 
+  margin-top: 50px;
+}
+
+.postcard {
+  background-color: black;
+  border: 2px solid white;
+  padding: 10px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  width: 100%; /* full width of the grid cell */
+  max-width: 350px; /* optional limit for large screens */
+  text-align: center;
+
+}
+
+.showarea {
+    padding: 20px;
+  padding-left: 60px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+}
+
+/* Grid Items (Postcards) */
+.showall {
+  background-color: black;
+  border: 2px solid white;
+  padding: 10px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  color: white;
+  text-align: center;
+
+  max-width: 500px; /* 👈 So it fills its grid cell */
+  box-sizing: border-box;
+}
+
+textarea {
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 1rem;
+  background: transparent;
+ 
+  color:white;
+}
+
+
+/* Image & Video Styling */
+.postcard img,
+.postcard video ,.showall img,.showall video{
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Caption */
+.postcard p ,.showall p{
+  margin: 10px 0;
+  font-weight: bold;
+  color: #423e3e;
+}
+
+/* Icons */
+.icon {
+  font-size: 1.3rem;
+  cursor: pointer;
+  margin: 0 8px;
+}
+.adddd{
+transform: all 0.3s ease;
+}
+.adddd:hover{
+  transform: scale(1.3);
+}
+
+.comment-section{
+  display: flex;
+  gap:1rem;
+  justify-content: center;
+  align-items: center;
+}
+.edit {
+  color: #ff9d00;
+}
+.edit:hover{
+  color:yellow;
+}
+
+.delete {
+  color: #f81900;
+}
+
+.delete:hover {
+  color: rgb(232, 87, 87)
+}
+
+.confirm {
+  color: green;
+}
+.confirm:hover{
+  color:lime
+}
+
+
+.like {
+  color: red;
+  font-size: 40px;
+
+}
+.ll{
+  font-size: 40px;
+}
+
+.largecontainer h2{
+  font-weight: bolder;
+
+
+}

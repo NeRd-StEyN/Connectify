@@ -1,0 +1,32 @@
+import { useEffect, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import axios from "axios";
+
+export const ProtectedRoute = ({children}) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(null); // null means loading
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        const res = await axios.get("http://localhost:7000/verify-token", {
+          withCredentials: true, // Send cookies
+        });
+
+        console.log("Verified user:", res.data.user);
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.warn("Auth check failed:", err.response?.data || err.message);
+        setIsAuthenticated(false);
+      }
+    };
+
+    verifyToken();
+  }, []);
+
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>; // Or a spinner component
+  }
+
+  return isAuthenticated ? children : <Navigate to="/" />;
+};
+

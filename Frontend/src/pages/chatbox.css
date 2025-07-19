@@ -1,0 +1,164 @@
+.chatbox-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  
+  border-left: 1px solid rgb(118, 118, 118);
+  height: 100vh;
+  position: fixed;
+  left:5rem;
+  color:white;
+  background: linear-gradient(135deg, #2f50e1, #6e2cb0);
+}
+
+.chat-messages {
+    display:flex;
+    flex-direction: column;
+    width:100%;
+  overflow-y:auto;
+  margin-bottom: 1rem;
+  flex: 1;
+ 
+  padding-right: 10px;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent; /* or a light grey */
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: #a1ce0b;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: #d5640e;
+}
+
+
+.chat-messages p{
+    margin-bottom: 10px;
+}
+.messa {
+  max-width: 60%;
+
+  margin: 5px 0;
+  font-size: 1.5rem;
+ 
+  word-wrap: break-word;
+  position: relative;
+}
+
+.incoming {
+  
+  align-self: flex-start;
+  color:white;
+}
+
+.out{
+ background-color: #17c32e;
+ padding: 0.5rem;
+ border-radius: 25px;
+position: relative;
+right:100px;
+
+}
+
+.im{
+  height: 150px;
+  width:150px;
+
+  position: relative;
+
+}
+.in{
+background-color: #000000;
+padding: 0.5rem;
+ border-radius: 15px;
+
+ 
+}
+.outgoing {
+ 
+ align-self: flex-end;
+  color:rgb(0, 0, 0);
+}
+
+.uu{
+  display: flex;
+  background:linear-gradient(145deg,rgb(183, 0, 255),yellow);
+  justify-content: center;
+  align-items: center;
+  position:relative;
+  top:-15px;
+  width:100%;
+  padding-top:1rem;
+  z-index: 999;
+  margin-bottom: 2rem;
+  
+ 
+}
+.uu img{
+  margin-left: -3rem;
+  margin-right: -40px;
+  border-radius: 25px;
+}
+
+.ope{
+  position: relative;
+  top:4rem
+}
+
+
+.chat-input {
+  display: flex;
+  
+  gap: 10px;
+  padding: 0.5rem;
+  width:80%;
+  margin:0 auto 1.5rem auto;
+  position: relative;
+  right:40px;  
+}
+
+.inpu {
+  flex: 1;
+width:40%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  caret-color: black;
+  margin-right: 0px;
+  font-weight: bolder;
+  position: relative;
+  top:5px;
+  
+
+  
+}
+
+
+.send{
+  color:black;
+  font-size: 2rem;
+  position: relative;
+  top:14px;
+
+}
+.send:hover{
+  color:rgb(0, 255, 110);
+}
+.smile{
+  color:yellow;
+  font-size: 2rem;
+  position: relative;
+  top:14px;
+}
+.smile:hover{
+  color:lime;
+}
