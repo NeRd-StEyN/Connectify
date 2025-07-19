@@ -49,7 +49,7 @@ const handleImageUpload = (e) => {
     const fetchMessages = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:7000/messages/${friend._id}`,
+              `${import.meta.env.VITE_API_URL}/messages/${friend._id}`,
           { withCredentials: true }
         );
         setMessages(res.data);
