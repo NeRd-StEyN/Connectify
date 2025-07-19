@@ -7,7 +7,10 @@ import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import { IoSend } from "react-icons/io5";
 import { FaSmile } from "react-icons/fa";
-const socket = io("http://localhost:7000", {
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+
+const socket = io(BASE_URL, {
   withCredentials: true,
 });
 

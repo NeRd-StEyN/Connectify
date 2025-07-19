@@ -1,7 +1,8 @@
 import axios from "axios";
 
 axios.defaults.withCredentials = true;
-const BASE_URL = "http://localhost:7000";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
 
 // Signup
 export const signup = async (data) => {
