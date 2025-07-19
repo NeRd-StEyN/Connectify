@@ -22,7 +22,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: ["http://localhost:5173", "https://connectify2025.vercel.app"],
+  origin: "https://connectify2025.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -88,7 +88,7 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (user && await bcrypt.compare(password, user.password)) {
       const token = await user.generatetoken();
-      res.cookie("jwt", token, { httpOnly: true,maxAge: 100 * 365 * 24 * 60 * 60 * 1000 });
+      res.cookie("jwt", token, { httpOnly: true,secure:true,maxAge: 100 * 365 * 24 * 60 * 60 * 1000 });
       res.status(200).send({message:"Login successful",_id:user._id});
     } else {
       res.status(400).send("Invalid credentials");
