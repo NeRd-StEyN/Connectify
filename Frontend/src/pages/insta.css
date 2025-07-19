@@ -144,7 +144,7 @@ right:10px;
   align-items: center;
   flex-direction: column;
   position:relative;
-  right:27px;
+  right:20px;
 
 }
 
@@ -160,7 +160,7 @@ right:10px;
   margin-bottom: 20px;
   color: white;
   text-align: center;
-min-width:200px;
+min-width:180px;
   max-width: 500px; /* 👈 So it fills its grid cell */
   box-sizing: border-box;
 }
