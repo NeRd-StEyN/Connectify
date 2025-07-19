@@ -43,15 +43,16 @@ export const sendrequest=async(recipientId)=>
   return res.data;
 }
 
-export const pendingrequest=async()=>
-{
-  const res=await axios.get(`${BASE_URL}/friendRequests`);
+export const pendingrequest = async () => {
+  const res = await axios.get(`${BASE_URL}/friendRequests`, {
+    withCredentials: true, // ✅ this sends cookies to the server
+  });
   return res.data;
-}
+};
 
 export const friends=async()=>
 {
-  const res=await axios.get(`${BASE_URL}/friends`);
+  const res=await axios.get(`${BASE_URL}/friends`,{withCredentials:true});
   return res.data;
 }
 
