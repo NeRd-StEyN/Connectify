@@ -7,7 +7,13 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     description:{type:String},
-    image:{type:String,default: `${process.env.URL}/default-user.png`},
+  image: {
+  type: String,
+  default: function () {
+    return `${process.env.URL}/default-user.png`;
+  }
+},
+
     tokens:[{
         token:{
             type:String,
