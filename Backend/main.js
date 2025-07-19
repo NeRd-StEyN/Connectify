@@ -46,6 +46,9 @@ app.use(express.static(path.join(__dirname, "public")));
 
 let storedOtp = "";
 let otpEmail = "";
+app.get("/", (req, res) => {
+  res.status(200).send("API is running");
+});
 
 
 app.post("/signup", async (req, res) => {
