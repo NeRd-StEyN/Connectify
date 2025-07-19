@@ -21,11 +21,11 @@ z-index: 999;
   font-weight: bolder;
   font-size: 1.5rem;
   padding: 0.5rem 1rem;
-  width: 60vw;
+  width: 55vw;
   max-width: 600px;
   min-width: 200px;
 position: relative;
-left:30px;
+left:40px;
   box-shadow: 0 0 10px 6px rgb(0, 0, 0);
 }
 
