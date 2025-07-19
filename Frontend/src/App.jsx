@@ -12,24 +12,24 @@ const router = createBrowserRouter([
     element: <Home />,
   },
   {
-    path: "/app", // All protected routes go under /app/*
+    path: "/", // All protected routes go under /app/*
     element: (
       <ProtectedRoute>
         <Layout />
       </ProtectedRoute>
     ),
     children: [
-        { path: "", element: <Navigate to="myself" replace /> },
+       
       { path: "search", element: <Search /> },
       { path: "chat", element: <Chat /> },
       { path: "insta", element: <Insta /> },
       { path: "myself", element: <Myself /> },
 
       // Catch invalid sub-routes under /app/*
-      { path: "search/*", element: <Navigate to="/app/search" replace /> },
-      { path: "chat/*", element: <Navigate to="/app/chat" replace /> },
-      { path: "insta/*", element: <Navigate to="/app/insta" replace /> },
-      { path: "myself/*", element: <Navigate to="/app/myself" replace /> },
+      { path: "search/*", element: <Navigate to="/search" replace /> },
+      { path: "chat/*", element: <Navigate to="/chat" replace /> },
+      { path: "insta/*", element: <Navigate to="/insta" replace /> },
+      { path: "myself/*", element: <Navigate to="/myself" replace /> },
     ],
   },
   {
