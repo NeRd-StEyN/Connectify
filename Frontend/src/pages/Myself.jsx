@@ -73,18 +73,19 @@ const toggleFriends = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchpending = async () => {
-      try {
-        const res = await pendingrequest();
-        setpending(res);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+ useEffect(() => {
+  const fetchpending = async () => {
+    try {
+      const res = await pendingrequest();
+      console.log("Pending request response:", res);
+      setpending(res);
+    } catch (err) {
+      console.log("Error fetching pending requests:", err);
+    }
+  };
 
-    fetchpending();
-  }, []);
+  fetchpending();
+}, []);
 
   useEffect(() => {
     const fetchfriends = async () => {
