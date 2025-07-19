@@ -85,7 +85,7 @@ const handleImageUpload = (e) => {
 
   try {
     await axios.post(
-      "http://localhost:7000/send-message",
+      `${import.meta.env.VITE_API_URL}/send-message`,
       {
         recipientId: friend._id,
         content: text,

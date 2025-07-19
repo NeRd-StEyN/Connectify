@@ -59,7 +59,7 @@ export const friends=async()=>
 
 export const acceptFriendRequest = async (requestId) => {
   return await axios.post(
-    "http://localhost:7000/friend-requests/respond",
+    `${import.meta.env.VITE_API_URL}/friend-requests/respond`,
     { requestId, action: "accept" },
     { withCredentials: true }
   );
@@ -67,7 +67,7 @@ export const acceptFriendRequest = async (requestId) => {
 
 export const rejectFriendRequest = async (requestId) => {
   return await axios.post(
-    "http://localhost:7000/friend-requests/respond",
+    `${import.meta.env.VITE_API_URL}/friend-requests/respond`,
     { requestId, action: "reject" },
     { withCredentials: true }
   );

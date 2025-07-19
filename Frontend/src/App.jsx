@@ -9,28 +9,9 @@ import {ProtectedRoute} from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
-  path: "/",
-  element: <Home />,
-  loader: async () => {
-    try {
-      const res = await fetch("http://localhost:7000/verify-token", {
-        method: "GET",
-        credentials: "include", // important to send cookies!
-      });
-
-      if (res.ok) {
-        // user is authenticated
-        return redirect("/myself");
-      }
-    } catch (err) {
-      console.error("Error verifying token:", err);
-    }
-
-    // user is not authenticated
-    return null;
+    path: "/",
+    element: <Home />,
   },
-},
-
   {
     path: "/",
     element: (

@@ -8,7 +8,7 @@ export const ProtectedRoute = ({children}) => {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const res = await axios.get("http://localhost:7000/verify-token", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/verify-token`, {
           withCredentials: true, // Send cookies
         });
 

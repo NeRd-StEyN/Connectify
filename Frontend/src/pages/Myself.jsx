@@ -61,7 +61,7 @@ const toggleFriends = () => {
   const handleSave = async () => {
     try {
       await axios.post(
-        "http://localhost:7000/edituser",
+        `${import.meta.env.VITE_API_URL}/edituser`,
         { d: desc, n: user.username },
         { withCredentials: true }
       );

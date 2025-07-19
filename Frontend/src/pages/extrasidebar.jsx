@@ -17,7 +17,7 @@ export const ExtraSidebar = ({ input, setinput,setSidebarOpen, user,sidebarOpen,
         if(val=="search")
        {
           const res = await axios.post(
-          "http://localhost:7000/search",
+          `${import.meta.env.VITE_API_URL}/search`,
           { search: input },
           { withCredentials: true }
         );
@@ -28,7 +28,7 @@ export const ExtraSidebar = ({ input, setinput,setSidebarOpen, user,sidebarOpen,
         {
           
           const res = await axios.post(
-          "http://localhost:7000/getchatlist",
+          `${import.meta.env.VITE_API_URL}/getchatlist`,
           { search: input },
           { withCredentials: true }
         );

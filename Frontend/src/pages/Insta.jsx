@@ -30,7 +30,7 @@ export const Insta = () => {
   const [editCaption, setEditCaption] = useState("");
   const [allpost, setallpost] = useState([]);
   const [commentInputs, setCommentInputs] = useState({});
-  const BASE_URL = "http://localhost:7000"; // or your backend URL
+  const BASE_URL = import.meta.env.VITE_API_URL; // or your backend URL
   const [showComments, setShowComments] = useState({});
 
   const { ref, inView } = useInView();
