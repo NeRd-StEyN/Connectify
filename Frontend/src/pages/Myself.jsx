@@ -298,7 +298,7 @@ const handleUnfriend = async (requestId) => {
  
     
       <div className="pending">
-  <h3  onClick={togglePending} style={{ fontSize:"1.7rem",cursor: "pointer" }}>
+  <h3  onClick={togglePending} style={{ fontSize:"1.4rem",cursor: "pointer" }}>
     Pending Requests: {pending.length} {showPending ? "🔼" : "🔽"}
   </h3>
   {showPending && (
