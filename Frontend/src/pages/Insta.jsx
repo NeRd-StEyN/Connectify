@@ -202,7 +202,13 @@ export const Insta = () => {
         {activeMenu === "my" && (
           <>
           <div className="viewarea">
-    
+    <h2 style={{
+        color: "black",
+        textAlign: "center",
+        marginBottom: "1rem"
+      }}>
+        My Posts
+      </h2>
             {myposts.length === 0 ? (
               <p style={{ color: "white",display:"flex",justifyContent:"center",alignItems:"center" ,display:"none"}}></p>
             ) : (
