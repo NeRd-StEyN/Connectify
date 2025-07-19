@@ -6,14 +6,13 @@ import { Myself } from "./pages/Myself";
 import { Chat } from "./pages/Chat";
 import { Search } from "./pages/Search";
 import {ProtectedRoute} from "./ProtectedRoute";
-
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: "/", // Public Home
     element: <Home />,
   },
   {
-    path: "/",
+    path: "/app", // All protected routes go under /app/*
     element: (
       <ProtectedRoute>
         <Layout />
@@ -21,30 +20,20 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "search", element: <Search /> },
-       {
-        path: "search/*", // catch all invalid sub-routes like /search/wrong
-        element: <Navigate to="/search" replace />,
-      },
       { path: "chat", element: <Chat /> },
-       {
-        path: "chat/*", // catch all invalid sub-routes like /search/wrong
-        element: <Navigate to="/chat" replace />,
-      },
       { path: "insta", element: <Insta /> },
-       {
-        path: "insta/*", // catch all invalid sub-routes like /search/wrong
-        element: <Navigate to="/insta" replace />,
-      },
       { path: "myself", element: <Myself /> },
-       {
-        path: "myself/*", // catch all invalid sub-routes like /search/wrong
-        element: <Navigate to="/myself" replace />,
-      },
+
+      // Catch invalid sub-routes under /app/*
+      { path: "search/*", element: <Navigate to="/app/search" replace /> },
+      { path: "chat/*", element: <Navigate to="/app/chat" replace /> },
+      { path: "insta/*", element: <Navigate to="/app/insta" replace /> },
+      { path: "myself/*", element: <Navigate to="/app/myself" replace /> },
     ],
   },
   {
-    path: "*",
-     element: <Navigate to="/" replace />, // or <Navigate to="/" replace /> or <NotFound />
+    path: "*", // Catch all unknown routes
+    element: <Navigate to="/" replace />,
   },
 ]);
 
