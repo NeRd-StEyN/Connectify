@@ -10,28 +10,28 @@ export const Sidebar = () => {
     <div className="main">
       <div className="sidebar">
         <NavLink
-  to="/app/search"
+  to="/search"
   className={({ isActive }) => isActive ? "icon-search active" : "icon-search"}
 >
   <FaSearch />
 </NavLink>
 
 <NavLink
-  to="/app/chat"
+  to="/chat"
   className={({ isActive }) => isActive ? "icon-chat active" : "icon-chat"}
 >
   <FaRocketchat />
 </NavLink>
 
 <NavLink
-  to="/app/insta"
+  to="/insta"
   className={({ isActive }) => isActive ? "icon-insta active" : "icon-insta"}
 >
   <FaInstagram />
 </NavLink>
 
 <NavLink
-  to="/app/myself"
+  to="/myself"
   className={({ isActive }) => isActive ? "icon-user active" : "icon-user"}
 >
   <FaUser />
