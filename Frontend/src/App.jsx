@@ -19,6 +19,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+        { path: "", element: <Navigate to="myself" replace /> },
       { path: "search", element: <Search /> },
       { path: "chat", element: <Chat /> },
       { path: "insta", element: <Insta /> },
