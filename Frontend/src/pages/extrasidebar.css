@@ -1,9 +1,9 @@
 .extra-sidebar {
   position: fixed;
   top: 0;
-  left: 5rem;
+  left: 4rem;
   /* or use 5vw if that's what your main sidebar uses */
-  width: calc(100vw - 5rem);
+  width: calc(100vw - 4rem);
   /* prevent overflow */
   height: 10vh;
   background: linear-gradient(145deg, #3f0b65, #ab0808);
