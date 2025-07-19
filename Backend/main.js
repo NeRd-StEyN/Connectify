@@ -86,7 +86,7 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (user && await bcrypt.compare(password, user.password)) {
       const token = await user.generatetoken();
-      res.cookie("jwt", token, { httpOnly: true,secure:true,maxAge: 100 * 365 * 24 * 60 * 60 * 1000 });
+      res.cookie("jwt", token, { httpOnly: true,sameSite:"none",secure:true,maxAge: 100 * 365 * 24 * 60 * 60 * 1000 });
       res.status(200).send({message:"Login successful",_id:user._id});
     } else {
       res.status(400).send("Invalid credentials");
