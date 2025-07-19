@@ -44,7 +44,7 @@ const toggleFriends = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("http://localhost:7000/get-user", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/get-user`, {
           withCredentials: true,
         });
         setUser(res.data);
@@ -123,7 +123,7 @@ const toggleFriends = () => {
       setShowCropper(false);
 
       await axios.post(
-        "http://localhost:7000/upload-image",
+        `${import.meta.env.VITE_API_URL}/upload-image`,
         { image: base64Image },
         { withCredentials: true }
       );
@@ -160,7 +160,7 @@ const toggleFriends = () => {
 const handleUnfriend = async (requestId) => {
   try {
     await axios.post(
-      "http://localhost:7000/friends/remove",
+      `${import.meta.env.VITE_API_URL}/friends/remove`,
       { requestId },
       { withCredentials: true }
     );
@@ -174,7 +174,7 @@ const handleUnfriend = async (requestId) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:7000/logout", {}, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_API_URL}/logout`, {}, { withCredentials: true });
       window.location.href = "/";
     } catch (err) {
       console.error("Logout failed", err);
@@ -183,7 +183,7 @@ const handleUnfriend = async (requestId) => {
 
   const handleLogoutAll = async () => {
     try {
-      await axios.post("http://localhost:7000/logout-all", {}, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_API_URL}/logout-all`, {}, { withCredentials: true });
      
       localStorage.clear(); // also clear localStorage if needed
       window.location.href = "/";
