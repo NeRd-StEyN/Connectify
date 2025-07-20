@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import axios from "axios";
-
+import {Spinner} from "./Spinner.jsx";
 export const ProtectedRoute = ({children}) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // null means loading
 
@@ -24,7 +24,7 @@ export const ProtectedRoute = ({children}) => {
   }, []);
 
   if (isAuthenticated === null) {
-    return <div>Loading...</div>; // Or a spinner component
+    return <Spinner />; // Or a spinner component
   }
 
   return isAuthenticated ? children : <Navigate to="/" />;
