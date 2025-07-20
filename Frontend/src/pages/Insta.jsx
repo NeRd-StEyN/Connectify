@@ -11,15 +11,12 @@ import {
   likeorunlikepost,
   commentonpost
 } from "../api/api";
-
-import { Spinner } from "../Spinner"; // adjust path as needed
-
-
 import { IoIosCreate } from "react-icons/io";
 import { FaCommentMedical } from "react-icons/fa";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
+import { Spinner } from "../Spinner"; // adjust the path if needed
 
 import { FaRegComment } from "react-icons/fa";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
@@ -39,18 +36,14 @@ export const Insta = () => {
 const [loadingMyPost, setLoadingMyPost] = useState(false);
 const [loadingAllPost, setLoadingAllPost] = useState(false);
 
-  
   const { ref, inView } = useInView();
 
   const queryClient = useQueryClient();
   const fetchPostsPage = async ({ pageParam = 1 }) => {
-    setLoadingAllPost(true);
     const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
       credentials: "include",
     });
-    const data=await res.json();
-    setLoadingAllPost(false);
-    return data;
+    return res.json();
   };
 
   const toggleComments = (postId) => {
@@ -81,17 +74,16 @@ const [loadingAllPost, setLoadingAllPost] = useState(false);
 
 
 
-const fetchMyPosts = async () => {
-  setLoadingMyPost(true);
-  try {
-    const res = await getmypost();
-    setMyposts(res.data);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingMyPost(false);
-  }
-};
+
+  const fetchMyPosts = async () => {
+    try {
+      const res = await getmypost();
+      setMyposts(res);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   const handleaddpost = async () => {
     if (!image || !caption.trim()) return;
@@ -174,7 +166,6 @@ const fetchMyPosts = async () => {
 
   return (
     <>
-      {(loadingAllPost || loadingMyPost) && <Spinner />}
       <div className="semicircle-menu">
         <FaPlusSquare title="Create New Post" onClick={() => setActiveMenu((prev) => (prev === "add" ? null : "add"))} className="menu-icon" />
       <FaUsers
@@ -421,4 +412,4 @@ const fetchMyPosts = async () => {
       </div>
     </>
   );
-};
+}; 
