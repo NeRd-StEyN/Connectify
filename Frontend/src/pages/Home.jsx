@@ -1,6 +1,7 @@
 // Home.jsx
 import { useEffect, useState } from "react";
 import "./Home.css";
+import {Spinner} from "../Spinner"; 
 import { FaArrowLeft, FaComments, FaLock } from "react-icons/fa";
 import { login, signup, sendOtp, verifyOtp, getUser } from "../api/api";
  // Axios functions
@@ -9,53 +10,60 @@ import axios from "axios";
 
 export const Home = () => {
   const navigate = useNavigate();
-
+  const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [showForgot, setShowForgot] = useState(false);
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(""); // 'success' or 'error'
+ 
 const BASE_URL="https://connectify-backend-flzz.onrender.com";
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/verify-token`, {
-          withCredentials: true,
-        });
+useEffect(() => {
+  const checkAuth = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${BASE_URL}/verify-token`, {
+        withCredentials: true,
+      });
 
-        // Log to verify structure
-        console.log("verify-token response:", res.data);
-
-        if (res.data?.user?.username) {
-          navigate("/myself");
-        }
-      } catch (err) {
-        console.warn("User not logged in:", err.response?.data || err.message);
-        // stay on page
+      console.log("verify-token response:", res.data);
+      if (res.data?.user?.username) {
+        navigate("/myself");
       }
-    };
+    } catch (err) {
+      console.warn("User not logged in:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    checkAuth();
-  }, []);
+  checkAuth();
+}, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-     const res= await login({ email: formData.email, password: formData.password });
-      localStorage.setItem("userId", res._id); 
-      navigate("/myself");
-    } catch (err) {
-      setStatus("erro");
-      setMessage(err.response?.data || "Login failed");
-    }
-  };
+ const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const res = await login({ email: formData.email, password: formData.password });
+    localStorage.setItem("userId", res._id);
+    navigate("/myself");
+  } catch (err) {
+    setStatus("erro");
+    setMessage(err.response?.data || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
 const handleSignup = async (e) => {
   e.preventDefault();
+  setLoading(true); // start spinner
   try {
     await signup({
       username: formData.username,
@@ -72,36 +80,46 @@ const handleSignup = async (e) => {
     setStatus("erro");
     setMessage(errorMessage);
   }
+ finally {
+      setLoading(false); // stop spinner
+    }
 };
 
 
-  const handleSendOtp = async (e) => {
-    e.preventDefault();
-    try {
-      await sendOtp(formData.forgotEmail);
-      setStatus("succes");
-      setMessage("OTP sent to your email.");
-    } catch (err) {
-      setStatus("erro");
-      setMessage(err.response?.data || "Failed to send OTP");
-    }
-  };
+const handleSendOtp = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    await sendOtp(formData.forgotEmail);
+    setStatus("succes");
+    setMessage("OTP sent to your email.");
+  } catch (err) {
+    setStatus("erro");
+    setMessage(err.response?.data || "Failed to send OTP");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    try {
-      await verifyOtp({
-        otp: formData.otp,
-        newPassword: formData.newPassword,
-      });
-      setStatus("succes");
-      setMessage("Password reset successful. Please login.");
-      setShowForgot(false);
-    } catch (err) {
-      setStatus("erro");
-      setMessage(err.response?.data || "OTP verification failed");
-    }
-  };
+const handleVerifyOtp = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    await verifyOtp({
+      otp: formData.otp,
+      newPassword: formData.newPassword,
+    });
+    setStatus("succes");
+    setMessage("Password reset successful. Please login.");
+    setShowForgot(false);
+  } catch (err) {
+    setStatus("erro");
+    setMessage(err.response?.data || "OTP verification failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
 useEffect(() => {
   if (!message) return;
@@ -114,7 +132,9 @@ useEffect(() => {
 }, [message]);
 
   return (
-    <div className="d">
+       <div className="d">
+        {loading && <Spinner />}
+
       <div id="logo">
         <FaComments className="comm" />
         <span>Connectify</span>
