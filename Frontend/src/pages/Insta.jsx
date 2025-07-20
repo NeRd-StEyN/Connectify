@@ -11,6 +11,10 @@ import {
   likeorunlikepost,
   commentonpost
 } from "../api/api";
+
+import { Spinner } from "../Spinner"; // adjust path as needed
+
+
 import { IoIosCreate } from "react-icons/io";
 import { FaCommentMedical } from "react-icons/fa";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,15 +36,21 @@ export const Insta = () => {
   const [commentInputs, setCommentInputs] = useState({});
   const BASE_URL = import.meta.env.VITE_API_URL; // or your backend URL
   const [showComments, setShowComments] = useState({});
+const [loadingMyPost, setLoadingMyPost] = useState(false);
+const [loadingAllPost, setLoadingAllPost] = useState(false);
 
+  
   const { ref, inView } = useInView();
 
   const queryClient = useQueryClient();
   const fetchPostsPage = async ({ pageParam = 1 }) => {
+    setLoadingAllPost(true);
     const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
       credentials: "include",
     });
-    return res.json();
+    const data=await res.json();
+    setLoadingAllPost(false);
+    return data;
   };
 
   const toggleComments = (postId) => {
@@ -71,15 +81,17 @@ export const Insta = () => {
 
 
 
-
-  const fetchMyPosts = async () => {
-    try {
-      const res = await getmypost();
-      setMyposts(res);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchMyPosts = async () => {
+  setLoadingMyPost(true);
+  try {
+    const res = await getmypost();
+    setMyPosts(res.data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingMyPost(false);
+  }
+};
 
 
   const handleaddpost = async () => {
@@ -163,6 +175,7 @@ export const Insta = () => {
 
   return (
     <>
+      {(loadingAllPost || loadingMyPost) && <Spinner />}
       <div className="semicircle-menu">
         <FaPlusSquare title="Create New Post" onClick={() => setActiveMenu((prev) => (prev === "add" ? null : "add"))} className="menu-icon" />
       <FaUsers
