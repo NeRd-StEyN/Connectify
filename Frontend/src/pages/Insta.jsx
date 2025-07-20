@@ -45,16 +45,15 @@ const fetchPostsPage = async ({ pageParam = 1 }) => {
     const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
       credentials: "include",
     });
-
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    throw error;
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching all posts:", err);
+    throw err;
   } finally {
     setLoadingAllPost(false);
   }
 };
+
 
   const toggleComments = (postId) => {
     setShowComments((prev) => ({
@@ -84,15 +83,17 @@ const fetchPostsPage = async ({ pageParam = 1 }) => {
 
 
 
-
-  const fetchMyPosts = async () => {
-    try {
-      const res = await getmypost();
-      setMyposts(res);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchMyPosts = async () => {
+  try {
+    setLoadingMyPost(true);
+    const res = await getmypost();
+    setMyposts(res);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoadingMyPost(false);
+  }
+};
 
 
   const handleaddpost = async () => {
@@ -176,6 +177,7 @@ const fetchPostsPage = async ({ pageParam = 1 }) => {
 
   return (
     <>
+      {(loadingMyPost || loadingAllPost) && <Spinner/>}
       <div className="semicircle-menu">
         <FaPlusSquare title="Create New Post" onClick={() => setActiveMenu((prev) => (prev === "add" ? null : "add"))} className="menu-icon" />
       <FaUsers
