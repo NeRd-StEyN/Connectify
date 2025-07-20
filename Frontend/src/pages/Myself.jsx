@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { Spinner } from "../Spinner"; // adjust the path if needed
+
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
 import { FaCamera,FaTimes,FaCheck } from "react-icons/fa"; // camera icon
@@ -12,7 +14,12 @@ import { IoLogOut } from "react-icons/io5";
 
 export const Myself = () => {
   const [user, setUser] = useState(null);
-
+const [loadingUser, setLoadingUser] = useState(true);
+const [loadingCrop, setLoadingCrop] = useState(false);
+const [loadingSave, setLoadingSave] = useState(false);
+const [loadingFriends, setLoadingFriends] = useState(false);
+const [loadingPending, setLoadingPending] = useState(false);
+  const [loadingLogout, setLoadingLogout] = useState(false);
   
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState("");
@@ -42,63 +49,79 @@ const toggleFriends = () => {
 };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/get-user`, {
-          withCredentials: true,
-        });
-        setUser(res.data);
-        setDesc(res.data.description || "");
-        setImage(res.data.image || "");
-      } catch (err) {
-        console.error("Failed to load user", err);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  const handleSave = async () => {
+  const fetchUser = async () => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/edituser`,
-        { d: desc, n: user.username },
-        { withCredentials: true }
-      );
-      setMessage("Profile updated!");
-      setTimeout(() => setMessage(""), 2000);
+      setLoadingUser(true);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/get-user`, {
+        withCredentials: true,
+      });
+      setUser(res.data);
+      setDesc(res.data.description || "");
+      setImage(res.data.image || "");
     } catch (err) {
-      console.error("Update failed", err);
-      setMessage("Update failed.");
+      console.error("Failed to load user", err);
+    } finally {
+      setLoadingUser(false);
     }
   };
 
- useEffect(() => {
+  fetchUser();
+}, []);
+
+
+const handleSave = async () => {
+  try {
+    setLoadingSave(true);
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/edituser`,
+      { d: desc, n: user.username },
+      { withCredentials: true }
+    );
+    setMessage("Profile updated!");
+    setTimeout(() => setMessage(""), 2000);
+  } catch (err) {
+    console.error("Update failed", err);
+    setMessage("Update failed.");
+  } finally {
+    setLoadingSave(false);
+  }
+};
+
+
+
+
+ 
+useEffect(() => {
   const fetchpending = async () => {
     try {
+      setLoadingPending(true);
       const res = await pendingrequest();
-      console.log("Pending request response:", res);
       setpending(res);
     } catch (err) {
       console.log("Error fetching pending requests:", err);
+    } finally {
+      setLoadingPending(false);
     }
   };
 
   fetchpending();
 }, []);
 
-  useEffect(() => {
-    const fetchfriends = async () => {
-      try {
-        const res = await friends();
-        setshowfriends(res);
-      } catch (err) {
-        console.log(err);
-      }
-    };
+useEffect(() => {
+  const fetchfriends = async () => {
+    try {
+      setLoadingFriends(true);
+      const res = await friends();
+      setshowfriends(res);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoadingFriends(false);
+    }
+  };
 
-    fetchfriends();
-  }, []);
+  fetchfriends();
+}, []);
 
 
   const handleFileChange = (e) => {
@@ -114,28 +137,31 @@ const toggleFriends = () => {
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
-  const handleCropDone = async () => {
-    try {
-      const base64Image = await getCroppedImg(
-        URL.createObjectURL(selectedFile),
-        croppedAreaPixels
-      );
-      setImage(base64Image);
-      setShowCropper(false);
+const handleCropDone = async () => {
+  try {
+    setLoadingCrop(true);
+    const base64Image = await getCroppedImg(
+      URL.createObjectURL(selectedFile),
+      croppedAreaPixels
+    );
+    setImage(base64Image);
+    setShowCropper(false);
 
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/upload-image`,
-        { image: base64Image },
-        { withCredentials: true }
-      );
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/upload-image`,
+      { image: base64Image },
+      { withCredentials: true }
+    );
 
-      setMessage("Image updated!");
-      setTimeout(() => setMessage(""), 2000);
-    } catch (err) {
-      console.error("Crop/upload failed", err);
-      setMessage("Crop failed");
-    }
-  };
+    setMessage("Image updated!");
+    setTimeout(() => setMessage(""), 2000);
+  } catch (err) {
+    console.error("Crop/upload failed", err);
+    setMessage("Crop failed");
+  } finally {
+    setLoadingCrop(false);
+  }
+};
 
 
   const handleAccept = async (requestId) => {
@@ -173,32 +199,33 @@ const handleUnfriend = async (requestId) => {
   }
 };
 
-  const handleLogout = async () => {
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/logout`, {}, { withCredentials: true });
-      window.location.href = "/";
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-  };
+  // const handleLogout = async () => {
+  //   try {
+  //     await axios.post(`${import.meta.env.VITE_API_URL}/logout`, {}, { withCredentials: true });
+  //     window.location.href = "/";
+  //   } catch (err) {
+  //     console.error("Logout failed", err);
+  //   }
+  // };
 
-  const handleLogoutAll = async () => {
+ const handleLogoutAll = async () => {
+    setLoadingLogout(true);
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/logout-all`, {}, { withCredentials: true });
-     
-      localStorage.clear(); // also clear localStorage if needed
+      localStorage.clear();
       window.location.href = "/";
     } catch (err) {
       console.error("Complete logout failed", err);
+    } finally {
+      setLoadingLogout(false); // just in case logout fails
     }
   };
-
-
 
   if (!user) return <h2 style={{display:"flex",justifyContent:"center",alignItems:"center"}}>Loading...</h2>;
 
   return (
     <div className="m"  >
+{(loadingUser || loadingCrop || loadingSave || loadingFriends || loadingPending || loadingLogout) && <Spinner />}
 
       <div className="myself-container" style={{ caretColor: "transparent" }}>
         <h1 className="myself">Myself</h1>
