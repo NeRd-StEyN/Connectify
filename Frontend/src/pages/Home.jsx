@@ -14,20 +14,29 @@ export const Home = () => {
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(""); // 'success' or 'error'
-useEffect(() => {
+const BASE_URL="https://connectify-backend-flzz.onrender.com";
+
+  useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/verify-token`, { withCredentials: true });
-        if (res?.username) {
+        const res = await axios.get(`${BASE_URL}/verify-token`, {
+          withCredentials: true,
+        });
+
+        // Log to verify structure
+        console.log("verify-token response:", res.data);
+
+        if (res.data?.user?.username) {
           navigate("/myself");
         }
       } catch (err) {
-        // Not logged in, stay on the page
+        console.warn("User not logged in:", err.response?.data || err.message);
+        // stay on page
       }
     };
+
     checkAuth();
   }, []);
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
