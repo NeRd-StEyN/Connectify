@@ -14,6 +14,19 @@ export const Home = () => {
   const [formData, setFormData] = useState({});
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(""); // 'success' or 'error'
+useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/verify-token`, { withCredentials: true });
+        if (res?.username) {
+          navigate("/myself");
+        }
+      } catch (err) {
+        // Not logged in, stay on the page
+      }
+    };
+    checkAuth();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
