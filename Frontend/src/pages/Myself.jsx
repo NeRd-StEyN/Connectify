@@ -212,8 +212,7 @@ const handleUnfriend = async (requestId) => {
 
           {dropdownOpen && (
             <div className="dropdown-menu">
-              <p onClick={handleLogout}>Logout (This Tab)</p>
-              <p onClick={handleLogoutAll}>Logout from All Devices</p>
+            <p onClick={handleLogoutAll}>Logout</p>
             </div>
           )}
         </div>
