@@ -82,15 +82,16 @@ const [loadingAllPost, setLoadingAllPost] = useState(false);
 
 
 const fetchMyPosts = async () => {
-
+  setLoadingMyPost(true);
   try {
     const res = await getmypost();
-    setMyPosts(res.data);
+    setMyposts(res.data);
   } catch (err) {
     console.error(err);
+  } finally {
+    setLoadingMyPost(false);
   }
 };
-
 
   const handleaddpost = async () => {
     if (!image || !caption.trim()) return;
