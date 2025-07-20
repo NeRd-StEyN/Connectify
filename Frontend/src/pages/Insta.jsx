@@ -40,10 +40,12 @@ const [loadingAllPost, setLoadingAllPost] = useState(false);
 
   const queryClient = useQueryClient();
   const fetchPostsPage = async ({ pageParam = 1 }) => {
+      setLoadingAllPost(true);
     const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
       credentials: "include",
     });
     return res.json();
+    setLoadingAllPost(false);
   };
 
   const toggleComments = (postId) => {
