@@ -1,0 +1,31 @@
+/* Spinner.css */
+
+.modern-spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modern-spinner {
+  width: 64px;
+  height: 64px;
+  border: 6px solid #d3d3d3;
+  border-top: 6px solid #fd0000;
+  border-radius: 50%;
+  animation: spin 0.5s linear infinite;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
