@@ -39,14 +39,22 @@ const [loadingAllPost, setLoadingAllPost] = useState(false);
   const { ref, inView } = useInView();
 
   const queryClient = useQueryClient();
-  const fetchPostsPage = async ({ pageParam = 1 }) => {
-      setLoadingAllPost(true);
+const fetchPostsPage = async ({ pageParam = 1 }) => {
+  try {
+    setLoadingAllPost(true);
     const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
       credentials: "include",
     });
-    return res.json();
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    throw error;
+  } finally {
     setLoadingAllPost(false);
-  };
+  }
+};
 
   const toggleComments = (postId) => {
     setShowComments((prev) => ({
