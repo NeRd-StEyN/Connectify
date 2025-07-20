@@ -5,6 +5,7 @@ import { FaArrowLeft, FaComments, FaLock } from "react-icons/fa";
 import { login, signup, sendOtp, verifyOtp, getUser } from "../api/api";
  // Axios functions
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export const Home = () => {
   const navigate = useNavigate();
