@@ -221,7 +221,7 @@ const handleUnfriend = async (requestId) => {
     }
   };
 
-  if (!user) return <h2 style={{display:"flex",justifyContent:"center",alignItems:"center"}}>Loading...</h2>;
+  if (!user) return <Spinner />;
 
   return (
     <div className="m"  >
