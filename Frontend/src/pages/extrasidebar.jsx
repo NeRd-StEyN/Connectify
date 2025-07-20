@@ -5,41 +5,40 @@ import { GiHamburgerMenu } from "react-icons/gi";
 export const ExtraSidebar = ({ input, setinput,setSidebarOpen, user,sidebarOpen,setuser ,val}) => {
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (input.trim() === "") {
-        setResults([]);
-        return;
-      }
+  const fetchUsers = async () => {
+  if (input.trim() === "") {
+    setResults([]);
+    setLoading(false); // ensure it's off
+    return;
+  }
 
-      try {
-        if(val=="search")
-       {
-          const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/search`,
-          { search: input },
-          { withCredentials: true }
-        );
-        setResults(res.data);
-        setShowDropdown(true);
-        }
-        else if (val=="chat")
-        {
-          
-          const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/getchatlist`,
-          { search: input },
-          { withCredentials: true }
-        );
-        setResults(res.data);
-        setShowDropdown(true);
-        }
-        
-      } catch (err) {
-        console.error("Search failed", err);
-      }
-    };
+  setLoading(true); // start loading
+  try {
+    let res;
+    if (val === "search") {
+      res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/search`,
+        { search: input },
+        { withCredentials: true }
+      );
+    } else if (val === "chat") {
+      res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/getchatlist`,
+        { search: input },
+        { withCredentials: true }
+      );
+    }
+    setResults(res.data);
+    setShowDropdown(true);
+  } catch (err) {
+    console.error("Search failed", err);
+  } finally {
+    setLoading(false); // stop loading regardless of success/failure
+  }
+};
 
     const delay = setTimeout(fetchUsers,500 ); // debounce input
     return () => clearTimeout(delay);
@@ -63,6 +62,7 @@ export const ExtraSidebar = ({ input, setinput,setSidebarOpen, user,sidebarOpen,
         style={{caretColor:"black"}}
        
       />
+{loading && <Spinner />}
 
 
 
