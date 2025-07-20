@@ -339,7 +339,7 @@ const handleUnfriend = async (requestId) => {
             wordBreak: "break-word",
             fontWeight: "bolder",
             whiteSpace: "normal",
-                marginLeft:"-9rem"
+                marginLeft:"-5rem"
           }}
         >
           {cur.sender.username}
@@ -388,7 +388,7 @@ const handleUnfriend = async (requestId) => {
                 wordBreak: "break-word",
                 fontWeight: "bolder",
                 whiteSpace: "normal",
-                marginLeft:"-3rem"
+                marginLeft:"-2rem"
               }}>
                 {friend.username}
               </p>
