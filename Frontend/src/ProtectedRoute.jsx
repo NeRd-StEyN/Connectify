@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import axios from "axios";
 
-export const ProtectedRoute = ({children}) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null means loading
+export const ProtectedRoute = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     const verifyToken = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/verify-token`, {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         });
 
-        console.log("Verified user:", res.data.user);
         setIsAuthenticated(true);
       } catch (err) {
-        console.warn("Auth check failed:", err.response?.data || err.message);
         setIsAuthenticated(false);
       }
     };
@@ -23,10 +22,17 @@ export const ProtectedRoute = ({children}) => {
     verifyToken();
   }, []);
 
-  if (isAuthenticated === null) {
-    return <div>Loading...</div>; // Or a spinner component
+  if (isAuthenticated === null) return <div>Loading...</div>;
+
+  // ✅ Redirect to /myself if logged in and visiting "/"
+  if (isAuthenticated && location.pathname === "/") {
+    return <Navigate to="/myself" replace />;
   }
 
-  return isAuthenticated ? children : <Navigate to="/" />;
-};
+  // ❌ Redirect to "/" (login) if not authenticated
+  if (!isAuthenticated && location.pathname !== "/") {
+    return <Navigate to="/" replace />;
+  }
 
+  return children ? children : <Outlet />;
+};
