@@ -82,14 +82,12 @@ const [loadingAllPost, setLoadingAllPost] = useState(false);
 
 
 const fetchMyPosts = async () => {
-  setLoadingMyPost(true);
+
   try {
     const res = await getmypost();
     setMyPosts(res.data);
   } catch (err) {
     console.error(err);
-  } finally {
-    setLoadingMyPost(false);
   }
 };
 
