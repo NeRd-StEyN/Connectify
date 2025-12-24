@@ -1,91 +1,126 @@
+.extra-sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 80px;
+    right: 0;
+    z-index: 1100;
+}
+
 .extra-sidebar {
-  position: fixed;
-  top: 0;
-  left: 4rem;
-  /* or use 5vw if that's what your main sidebar uses */
-  width: calc(100vw - 4rem);
-  /* prevent overflow */
-  height: 10vh;
-  background: linear-gradient(145deg, #3f0b65, #ab0808);
-
-  justify-content: center;
-  align-items: center;
- 
-z-index: 999;
+    height: 80px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 80px 0 24px;
+    /* Space for the trigger on the right or left */
+    gap: 16px;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
-
-.input {
-  margin-top: 0.8rem;
-  border-radius: 25px;
-  font-weight: bolder;
-  font-size: 1.5rem;
-  padding: 0.5rem 1rem;
-  width: 55vw;
-  max-width: 600px;
-  min-width: 200px;
-position: relative;
-left:40px;
-  box-shadow: 0 0 10px 6px rgb(0, 0, 0);
+.extra-sidebar.close {
+    transform: translateY(-100%);
 }
 
-img {
-  height: 50px;
-  width: 50px;
+.hamburger-trigger {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    /* Moved to right to avoid overlapping left text */
+    z-index: 1200;
+    color: var(--text-dim);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-deep);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.hamburger-trigger:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.extra-sidebar .input {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-main);
+    font-size: 1rem;
+    padding: 14px 20px;
+    width: 100%;
+    /* Full width */
+    outline: none;
+    transition: all 0.2s;
+}
+
+.extra-sidebar .input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-glow);
 }
 
 .search-results {
-  display: flex;
-  flex-direction: column;
-   width: 70%;
-  overflow-y: auto;
-  list-style: none;
-  padding: 0;
-  margin: 1rem auto auto;
-  z-index: 10;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    list-style: none;
+    padding: 12px 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 1090;
 }
 
 .search-results li {
-  display: flex;                 /* Make image + text side by side */
-  align-items: center;  
-  background: linear-gradient(135deg, #ff0000, #ccff00);
-  padding: 8px 12px;
-  cursor: pointer;
-  font-weight: bolder;
-  border: 3px solid rgb(0, 0, 0);
-  margin-bottom: 0.2rem;
-z-index: 1000;
-  box-sizing: border-box;
-
-}
-
-.search-results li img {
-  border-radius: 25px;
-    margin-right: 10px;   
-  
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.2s;
 }
 
 .search-results li:hover {
-  background:linear-gradient(135deg,white,black);
+    background: rgba(255, 255, 255, 0.05);
 }
-span{
-  position: relative;
 
-  margin-left: 0.5rem;
+.search-results li img {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
 }
-.hamburger{
-    z-index: 9999;
-    position: fixed;
-    top:0rem;
-    left:5rem;
-    padding:10px;
-    font-size:4rem;
-  color:rgb(1, 1, 1);
-  transition: all 0.3s ease;
+
+.search-results li span {
+    font-weight: 500;
+    color: var(--text-main);
 }
-.hamburger:hover{
-  transform: scale(1.3);
-}
-.close{
-  display: none;
+
+@media (max-width: 768px) {
+    .extra-sidebar-container {
+        left: 0;
+    }
+
+    .extra-sidebar {
+        padding: 0 70px 0 16px;
+    }
+
+    .hamburger-trigger {
+        right: 16px;
+        top: 20px;
+        width: 36px;
+        height: 36px;
+    }
 }

@@ -19,13 +19,13 @@ export const Chat = () => {
       />
 
       {user ? (
-        <ChatBox friend={user}  sidebarOpen={sidebarOpen}/>
+        <ChatBox friend={user} sidebarOpen={sidebarOpen} />
       ) : (
         <div
           style={{
             flexGrow: 1,
             display: "flex",
-               margin:"0 auto 0 100px",
+            margin: "0 auto 0 100px",
 
             justifyContent: "center",
             alignItems: "center",
@@ -34,7 +34,7 @@ export const Chat = () => {
         >
           <p
             style={{
-              margin:"0 auto 0 auto",
+              margin: "0 auto 0 auto",
               fontWeight: "bolder",
               fontSize: "1.5rem",
               display: "flex",

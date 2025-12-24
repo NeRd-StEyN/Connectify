@@ -22,7 +22,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: "https://connectify2025.vercel.app",
+  origin: ["https://connectify2025.vercel.app", "http://localhost:5173"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -35,7 +35,7 @@ const { Server } = require("socket.io");
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://connectify2025.vercel.app", // frontend URL
+    origin: ["https://connectify2025.vercel.app", "http://localhost:5173"], // Added local origin
     credentials: true
   }
 });
@@ -89,8 +89,8 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (user && await bcrypt.compare(password, user.password)) {
       const token = await user.generatetoken();
-      res.cookie("jwt", token, { httpOnly: true,sameSite:"none",secure:true,maxAge: 100 * 365 * 24 * 60 * 60 * 1000 });
-      res.status(200).send({message:"Login successful",_id:user._id});
+      res.cookie("jwt", token, { httpOnly: true, sameSite: "none", secure: true, maxAge: 100 * 365 * 24 * 60 * 60 * 1000 });
+      res.status(200).send({ message: "Login successful", _id: user._id });
     } else {
       res.status(400).send("Invalid credentials");
     }
@@ -174,8 +174,8 @@ app.post("/getUserInfo", async (req, res) => {
 
 app.post("/sendFriendRequest", auth, async (req, res) => {
   try {
-    const senderId=req.user._id;
-    const {  recipientId } = req.body;
+    const senderId = req.user._id;
+    const { recipientId } = req.body;
     const sender = await User.findById(senderId);
     const recipient = await User.findById(recipientId);
 
@@ -185,20 +185,20 @@ app.post("/sendFriendRequest", auth, async (req, res) => {
 
     // Existing pending request?
     const existingRequest = await FriendRequest.findOne({
-  $or: [
-    { sender: senderId, recipient: recipientId },
-    { sender: recipientId, recipient: senderId },
-  ],
-  status: { $in: ["pending", "accepted"] }
-});
+      $or: [
+        { sender: senderId, recipient: recipientId },
+        { sender: recipientId, recipient: senderId },
+      ],
+      status: { $in: ["pending", "accepted"] }
+    });
 
-if (existingRequest) {
-  const message = existingRequest.status === "accepted"
-    ? "You are already friends."
-    : "Friend request already pending.";
+    if (existingRequest) {
+      const message = existingRequest.status === "accepted"
+        ? "You are already friends."
+        : "Friend request already pending.";
 
-  return res.status(400).json({ message });
-}
+      return res.status(400).json({ message });
+    }
 
 
     //  Create new request
@@ -230,11 +230,11 @@ app.get("/friendRequests", auth, async (req, res) => {
 });
 
 app.post("/friend-requests/respond", auth, async (req, res) => {
- const { requestId, action } = req.body;
+  const { requestId, action } = req.body;
 
   try {
     const request = await FriendRequest.findById(requestId);
-  
+
 
     request.status = action === "accept" ? "accepted" : "rejected";
     await request.save();
@@ -257,13 +257,12 @@ app.get("/friends", auth, async (req, res) => {
   }
 });
 
-app.post("/friends/remove",auth,async(req,res)=>
-{
-   try {
+app.post("/friends/remove", auth, async (req, res) => {
+  try {
     const { requestId } = req.body;
 
     const request = await FriendRequest.findById(requestId);
-  
+
     await FriendRequest.findByIdAndDelete(requestId);
     res.json({ message: "Unfriended successfully" });
   } catch (err) {
@@ -297,7 +296,7 @@ app.post("/getchatlist", auth, async (req, res) => {
       ]
     });
 
-    
+
     // Step 2: Extract friend IDs properly
     const friendIds = acceptedFriends.map(fr => {
       const senderId = fr.sender.toString();
@@ -326,7 +325,7 @@ app.post("/getchatlist", auth, async (req, res) => {
 
 app.post("/send-message", auth, async (req, res) => {
   try {
-    const { recipientId, content ,image} = req.body;
+    const { recipientId, content, image } = req.body;
     const newMessage = await Message.create({
       sender: req.user._id,
       recipient: recipientId,
@@ -396,9 +395,9 @@ app.get("/messages/:friendId", auth, async (req, res) => {
 
 
 // ✅ Create Post
-app.post("/insta/post",auth, async (req, res) => {
+app.post("/insta/post", auth, async (req, res) => {
   const { caption, image } = req.body;
-  console.log(image,caption);
+  console.log(image, caption);
   try {
     const post = new Post({ user: req.user._id, caption, image });
     await post.save();
@@ -432,8 +431,8 @@ app.get("/insta/posts", auth, async (req, res) => {
 app.get("/insta/myposts", auth, async (req, res) => {
   try {
 
-    const posts = await Post.find({ user: req.user._id}).populate("comments.user","username image").sort({ createdAt: -1 });
-   res.json(posts);
+    const posts = await Post.find({ user: req.user._id }).populate("user", "username image").populate("comments.user", "username image").sort({ createdAt: -1 });
+    res.json(posts);
   } catch (err) {
     res.status(500).json({ error: "Could not fetch your posts" });
   }
@@ -450,7 +449,7 @@ app.put("/insta/post/:id", auth, async (req, res) => {
 
     post.caption = caption || post.caption;
     post.image = image || post.image;
-    console.log(post.caption,post.image);
+    console.log(post.caption, post.image);
     const updatedPost = await post.save();
 
     res.json(updatedPost);
@@ -463,7 +462,7 @@ app.put("/insta/post/:id", auth, async (req, res) => {
 app.delete("/insta/post/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    
+
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
@@ -517,8 +516,8 @@ app.post("/insta/post/:id/comment", auth, async (req, res) => {
     await post.save();
 
     // ✅ FIX: populate and assign
-    const populatedPost = await Post.findById(post._id).populate("comments.user","username");
-  
+    const populatedPost = await Post.findById(post._id).populate("comments.user", "username");
+
     res.status(201).json({ message: "Comment added", comments: populatedPost.comments });
   } catch (err) {
     res.status(500).json({ error: "Could not add comment" });
@@ -528,10 +527,10 @@ app.post("/insta/post/:id/comment", auth, async (req, res) => {
 //get comments
 app.get("/insta/post/:id/comments", async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate("comments.user","username");
+    const post = await Post.findById(req.params.id).populate("comments.user", "username");
 
     if (!post) return res.status(404).json({ error: "Post not found" });
-console.log("Post Comments Populated:", post.comments);
+    console.log("Post Comments Populated:", post.comments);
 
     res.json(post.comments); // Only return comments
   } catch (err) {
@@ -556,7 +555,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  
+
   socket.on("disconnect", () => {
     for (const [userId, socketId] of userSocketMap.entries()) {
       if (socketId === socket.id) {

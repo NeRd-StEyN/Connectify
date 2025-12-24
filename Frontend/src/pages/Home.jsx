@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import "./Home.css";
 import { FaArrowLeft, FaComments, FaLock } from "react-icons/fa";
 import { login, signup, sendOtp, verifyOtp, getUser } from "../api/api";
- // Axios functions
+// Axios functions
 import { useNavigate } from "react-router-dom";
 
 export const Home = () => {
@@ -22,8 +22,8 @@ export const Home = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-     const res= await login({ email: formData.email, password: formData.password });
-      localStorage.setItem("userId", res._id); 
+      const res = await login({ email: formData.email, password: formData.password });
+      localStorage.setItem("userId", res._id);
       navigate("/myself");
     } catch (err) {
       setStatus("erro");
@@ -31,25 +31,25 @@ export const Home = () => {
     }
   };
 
-const handleSignup = async (e) => {
-  e.preventDefault();
-  try {
-    await signup({
-      username: formData.username,
-      email: formData.email,
-      password: formData.password,
-    });
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    try {
+      await signup({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
 
-    setStatus("succes");
-    setMessage("Signup successful! You can now login.");
-    setIsLogin(true);
-  } catch (err) {
-    const errorMessage =
-      err.response?.data?.message || "Signup failed. Please try again.";
-    setStatus("erro");
-    setMessage(errorMessage);
-  }
-};
+      setStatus("succes");
+      setMessage("Signup successful! You can now login.");
+      setIsLogin(true);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || "Signup failed. Please try again.";
+      setStatus("erro");
+      setMessage(errorMessage);
+    }
+  };
 
 
   const handleSendOtp = async (e) => {
@@ -80,15 +80,15 @@ const handleSignup = async (e) => {
     }
   };
 
-useEffect(() => {
-  if (!message) return;
+  useEffect(() => {
+    if (!message) return;
 
-  const timer = setTimeout(() => {
-    setMessage("");
-  }, 1000);
+    const timer = setTimeout(() => {
+      setMessage("");
+    }, 1000);
 
-  return () => clearTimeout(timer); // clear timeout if message changes again
-}, [message]);
+    return () => clearTimeout(timer); // clear timeout if message changes again
+  }, [message]);
 
   return (
     <div className="d">

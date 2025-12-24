@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
-import { FaCamera,FaTimes,FaCheck } from "react-icons/fa"; // camera icon
+import { FaCamera, FaTimes, FaCheck } from "react-icons/fa"; // camera icon
 import "./Myself.css"; // custom styles
 import { friends } from "../api/api";
 import { pendingrequest } from "../api/api";
@@ -13,7 +13,7 @@ import { IoLogOut } from "react-icons/io5";
 export const Myself = () => {
   const [user, setUser] = useState(null);
 
-  
+
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState("");
   const [message, setMessage] = useState("");
@@ -29,17 +29,17 @@ export const Myself = () => {
   const [showfriends, setshowfriends] = useState([]);
 
   const [showPending, setShowPending] = useState(false);
-const [showFriends, setShowFriends] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
 
-const togglePending = () => {
-  setShowPending(prev => !prev);
-  setShowFriends(false); // close others
-};
+  const togglePending = () => {
+    setShowPending(prev => !prev);
+    setShowFriends(false); // close others
+  };
 
-const toggleFriends = () => {
-  setShowFriends(prev => !prev);
-  setShowPending(false); // close others
-};
+  const toggleFriends = () => {
+    setShowFriends(prev => !prev);
+    setShowPending(false); // close others
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -73,19 +73,19 @@ const toggleFriends = () => {
     }
   };
 
- useEffect(() => {
-  const fetchpending = async () => {
-    try {
-      const res = await pendingrequest();
-      console.log("Pending request response:", res);
-      setpending(res);
-    } catch (err) {
-      console.log("Error fetching pending requests:", err);
-    }
-  };
+  useEffect(() => {
+    const fetchpending = async () => {
+      try {
+        const res = await pendingrequest();
+        console.log("Pending request response:", res);
+        setpending(res);
+      } catch (err) {
+        console.log("Error fetching pending requests:", err);
+      }
+    };
 
-  fetchpending();
-}, []);
+    fetchpending();
+  }, []);
 
   useEffect(() => {
     const fetchfriends = async () => {
@@ -158,20 +158,20 @@ const toggleFriends = () => {
 
 
 
-const handleUnfriend = async (requestId) => {
-  try {
-    await axios.post(
-      `${import.meta.env.VITE_API_URL}/friends/remove`,
-      { requestId },
-      { withCredentials: true }
-    );
+  const handleUnfriend = async (requestId) => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/friends/remove`,
+        { requestId },
+        { withCredentials: true }
+      );
 
-    // ✅ Correct the state update here
-    setshowfriends(prev => prev.filter(f => f._id !== requestId));
-  } catch (err) {
-    console.error("Failed to unfriend", err);
-  }
-};
+      // ✅ Correct the state update here
+      setshowfriends(prev => prev.filter(f => f._id !== requestId));
+    } catch (err) {
+      console.error("Failed to unfriend", err);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -185,7 +185,7 @@ const handleUnfriend = async (requestId) => {
   const handleLogoutAll = async () => {
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/logout-all`, {}, { withCredentials: true });
-     
+
       localStorage.clear(); // also clear localStorage if needed
       window.location.href = "/";
     } catch (err) {
@@ -195,75 +195,59 @@ const handleUnfriend = async (requestId) => {
 
 
 
-  if (!user) return <h2 style={{display:"flex",justifyContent:"center",alignItems:"center"}}>Loading...</h2>;
+  if (!user) return <h2 style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>Loading...</h2>;
 
   return (
-    <div className="m"  >
-
-      <div className="myself-container" style={{ caretColor: "transparent" }}>
-        <h1 className="myself">Myself</h1>
+    <div className="m">
+      <div className="myself-container animate-in">
         <div className="logout-dropdown">
           <button
             className="logout-btn"
             onClick={() => setDropdownOpen((prev) => !prev)}
+            title="Logout"
           >
             <IoLogOut />
           </button>
-
           {dropdownOpen && (
             <div className="dropdown-menu">
               <p onClick={handleLogout}>Logout (This Tab)</p>
-              <p onClick={handleLogoutAll}>Logout from All Devices</p>
+              <p onClick={handleLogoutAll}>Logout all devices</p>
             </div>
           )}
         </div>
 
-
-        <div className="profile-pic-wrapper">
-          <img src={image} alt="Profile" className="profile-pic" />
-          <label htmlFor="fileInput" className="file-upload-icon">
-            <FaCamera />
-          </label>
-          <input
-            id="fileInput"
-            type="file"
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
+        <div className="profile-header">
+          <div className="profile-pic-wrapper">
+            <img src={image} alt="Profile" className="profile-pic" />
+            <label htmlFor="fileInput" className="file-upload-icon">
+              <FaCamera />
+            </label>
+            <input
+              id="fileInput"
+              type="file"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+          </div>
+          <div className="profile-info">
+            <h3>{user.username}</h3>
+            <p>{pending.length} pending requests • {showfriends.length} friends</p>
+          </div>
         </div>
 
-        <h3 style={{ maxWidth: "400px", // or any suitable width
-  wordBreak: "break-word", // forces long names to break
-  fontWeight: "bolder",
-  whiteSpace: "normal", fontSize:"2rem", marginLeft: "60px",}}>Username: {user.username}</h3>
-          <label style={{ fontSize:"1.5rem", marginLeft: "60px"}}><strong>DESCRIPTION:</strong></label>
-        <div className="desc"
-          
-        >
-        
+        <div className="desc-section">
+          <label>About Me</label>
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
-            rows={3}
+            rows={4}
+            placeholder="Tell the world something about you..."
             spellCheck={false}
-            placeholder="Write something about yourself..."
-            style={{
-              width: "100%",
-              fontSize: "20px",
-              border: "none",
-              background: "transparent",
-              resize: "none",
-              color: "black",
-              outline: "none",
-              overflow: "auto",
-              cursor: "text",
-              caretColor: "lime"
-            }}
           />
         </div>
 
-          <FaSave onClick={handleSave} title="Save Changes" className="save-btn" />
-       
+        <FaSave onClick={handleSave} className="save-btn" title="Save Changes" />
+
         {message && <p className="messag">{message}</p>}
 
         {showCropper && (
@@ -295,98 +279,59 @@ const handleUnfriend = async (requestId) => {
         )}
 
 
- 
-    
-      <div className="pending">
-  <h3  onClick={togglePending} style={{ fontSize:"1.4rem",cursor: "pointer" }}>
-    Pending Requests: {pending.length} {showPending ? "🔼" : "🔽"}
-  </h3>
-  {showPending && (
-   <ul>
-  {pending.map((cur) => (
-    <li key={cur._id} className="pending-li">
-      <div className="pending-item">
-        <p
-          style={{
-            display: "inline-block",
-            maxWidth: "100px",
-            wordBreak: "break-word",
-            fontWeight: "bolder",
-            whiteSpace: "normal",
-                marginLeft:"-9rem"
-          }}
-        >
-          {cur.sender.username}
-        </p>
-        <FaCheck
-          className="common"
-          onClick={() => handleAccept(cur._id)}
-          style={{
-            cursor: "pointer",
-            color: "green",
-            fontSize: "2rem",
-          }}
-        />
-        <FaTimes
-          className="common"
-          onClick={() => handleReject(cur._id)}
-          style={{
-            cursor: "pointer",
-            color: "red",
-            fontSize: "2rem",
-          }}
-        />
+
+
+        <div className="friends-section">
+          <div className="section-title" onClick={togglePending}>
+            <span>Pending Requests ({pending.length})</span>
+            <span>{showPending ? "↑" : "↓"}</span>
+          </div>
+          {showPending && (
+            <ul>
+              {pending.map((cur) => (
+                <li key={cur._id} className="pending-li">
+                  <p>{cur.sender.username}</p>
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <FaCheck
+                      onClick={() => handleAccept(cur._id)}
+                      style={{ cursor: "pointer", color: "var(--success)" }}
+                    />
+                    <FaTimes
+                      onClick={() => handleReject(cur._id)}
+                      style={{ cursor: "pointer", color: "var(--error)" }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="section-title" onClick={toggleFriends}>
+            <span>Friends ({showfriends.length})</span>
+            <span>{showFriends ? "↑" : "↓"}</span>
+          </div>
+          {showFriends && (
+            <ul>
+              {showfriends.map((cur) => {
+                const friend = cur.sender._id === user._id ? cur.recipient : cur.sender;
+                return (
+                  <li key={cur._id} className="friend-item">
+                    <p>{friend.username}</p>
+                    <FaTimes
+                      onClick={() => handleUnfriend(cur._id)}
+                      style={{ cursor: "pointer", color: "var(--error)" }}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+
+
+
       </div>
-    </li>
-  ))}
-</ul>
-
-  )}
-</div>
-
-<div className="accepted">
-  <h3 onClick={toggleFriends} style={{ fontSize: "1.7rem", cursor: "pointer" }}>
-    Friends: {showfriends.length} {showFriends ? "🔼" : "🔽"}
-  </h3>
-  {showFriends && (
-    <ul>
-      {showfriends.map((cur) => {
-        if (!cur.sender || !cur.recipient) return null;
-        const friend = cur.sender._id === user._id ? cur.recipient : cur.sender;
-        return (
-          <li key={cur._id}>
-            <div className="friend-item">
-              <p style={{
-                display: "inline-block",
-                maxWidth: "100px",
-                wordBreak: "break-word",
-                fontWeight: "bolder",
-                whiteSpace: "normal",
-                marginLeft:"-3rem"
-              }}>
-                {friend.username}
-              </p>
-              <FaTimes
-                className="common"
-                onClick={() => handleUnfriend(cur._id)}
-                style={{
-                  cursor: "pointer",
-                  color: "red",
-                  fontSize: "2rem",
-                }}
-              />
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  )}
-</div>
-
-
-
-  
-     </div>
 
     </div>
   );

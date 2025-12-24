@@ -17,26 +17,26 @@ const socket = io(BASE_URL, {
 import { FaImages } from "react-icons/fa6";
 
 
-export const ChatBox = ({ friend,sidebarOpen }) => {
+export const ChatBox = ({ friend, sidebarOpen }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const scrollRef = useRef(null);
-  
-const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-const [image, setImage] = useState(null);
 
-const handleImageUpload = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImage(reader.result); // base64 encoded
-    };
-    reader.readAsDataURL(file);
-  }
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [image, setImage] = useState(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result); // base64 encoded
+      };
+      reader.readAsDataURL(file);
+    }
     e.target.value = null;
-  
-};
+
+  };
 
 
   const userId = localStorage.getItem("userId");
@@ -49,7 +49,7 @@ const handleImageUpload = (e) => {
     const fetchMessages = async () => {
       try {
         const res = await axios.get(
-              `${import.meta.env.VITE_API_URL}/messages/${friend._id}`,
+          `${import.meta.env.VITE_API_URL}/messages/${friend._id}`,
           { withCredentials: true }
         );
         setMessages(res.data);
@@ -69,37 +69,37 @@ const handleImageUpload = (e) => {
     return () => socket.off("receive-message");
   }, [friend]);
 
- const sendMessage = async () => {
-  if ((!text || [...text].filter((c) => c.trim() !== "").length === 0) && !image) return;
+  const sendMessage = async () => {
+    if ((!text || [...text].filter((c) => c.trim() !== "").length === 0) && !image) return;
 
-  const msg = {
-    sender: userId,
-    recipient: friend._id,
-    content: text,
-    image, // can be null
-    timestamp: new Date(),
+    const msg = {
+      sender: userId,
+      recipient: friend._id,
+      content: text,
+      image, // can be null
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, msg]);
+    socket.emit("send-message", { to: friend._id, message: msg });
+
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/send-message`,
+        {
+          recipientId: friend._id,
+          content: text,
+          image, // send image to backend
+        },
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Send failed", err);
+    }
+
+    setText("");
+    setImage(null);
   };
-
-  setMessages((prev) => [...prev, msg]);
-  socket.emit("send-message", { to: friend._id, message: msg });
-
-  try {
-    await axios.post(
-      `${import.meta.env.VITE_API_URL}/send-message`,
-      {
-        recipientId: friend._id,
-        content: text,
-        image, // send image to backend
-      },
-      { withCredentials: true }
-    );
-  } catch (err) {
-    console.error("Send failed", err);
-  }
-
-  setText("");
-  setImage(null);
-};
 
 
   useEffect(() => {
@@ -108,24 +108,22 @@ const handleImageUpload = (e) => {
 
 
   const getFormattedDate = () => {
-  const date = new Date();
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
+    const date = new Date();
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
-``
+  ``
   return (
     <div className="chatbox-container">
-     <div className={`uu ${sidebarOpen ? "ope" : "clos"}`}>
-
-        <img src={friend.image} ></img>
-        <h3 style={{color:"black",fontWeight:"bolder",fontSize:"1.5rem"}}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{friend.username}</h3>
-
+      <div className={`uu ${sidebarOpen ? "ope" : "clos"}`}>
+        <img src={friend.image} alt={friend.username} />
+        <h3>{friend.username}</h3>
       </div>
-     
+
       <div className="chat-messages">
         {messages.map((msg, i) => (
           <div
@@ -134,37 +132,37 @@ const handleImageUpload = (e) => {
               msg.sender === userId ? "messa outgoing" : "messa incoming"
             }
           >
-          <p className={msg.sender === userId ? "out" : "in"}>
-            {msg.image && (
-    <img src={msg.image} className="im"alt="sent" style={{ maxWidth: "200px", marginTop: "10px", borderRadius: "10px" }} />
-  )}
- {msg.image && <br></br>}
-    {msg.content}
-</p>
+            <p className={msg.sender === userId ? "out" : "in"}>
+              {msg.image && (
+                <img src={msg.image} className="im" alt="sent" style={{ maxWidth: "200px", marginTop: "10px", borderRadius: "10px" }} />
+              )}
+              {msg.image && <br></br>}
+              {msg.content}
+            </p>
 
-  
+
 
           </div>
         ))}
         <div ref={scrollRef}></div>
       </div>
- <div className="chat-input">
+      <div className="chat-input">
         <input
           value={text}
           className="inpu"
           onChange={(e) => setText(e.target.value)}
           placeholder="Type your message..."
           onKeyDown={(e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  }}
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
         />
-        <label htmlFor="sendimage"> <FaImages className="send"/></label>
-        <input type="file" onChange={handleImageUpload} accept="image/*" id="sendimage" style={{display:"none"}}></input>
-     
-        <FaSmile className="smile"onClick={() => setShowEmojiPicker((prev) => !prev)}/>
+        <label htmlFor="sendimage"> <FaImages className="send" /></label>
+        <input type="file" onChange={handleImageUpload} accept="image/*" id="sendimage" style={{ display: "none" }}></input>
+
+        <FaSmile className="smile" onClick={() => setShowEmojiPicker((prev) => !prev)} />
 
         {showEmojiPicker && (
           <div
@@ -185,8 +183,8 @@ const handleImageUpload = (e) => {
           </div>
         )}
 
-        <IoSend className="send" onClick={sendMessage}/>
+        <IoSend className="send" onClick={sendMessage} />
       </div>
-      </div>
+    </div>
   );
 };

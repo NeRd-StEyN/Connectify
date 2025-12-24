@@ -41,40 +41,25 @@ export const Search = () => {
 
 
       <ExtraSidebar input={input} setinput={setinput} user={user} setuser={setuser} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} val="search" />
-      {!user && <div
-        style={{
-          flexGrow: 1,
-          display: "flex",
-          margin: "0 auto 0 100px",
-
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh", // make sure it's full height
-        }}
-      >
-        <p
-          style={{
-            margin: "0 auto 0 auto",
-            fontWeight: "bolder",
-            fontSize: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
-          <FaUserFriends style={{ fontSize: "2.5rem" }} />
-          Select a user to send friend request
-        </p>
-      </div>}
       <div className="searched">
-
-        {user?.image && <img className="img" src={user?.image}></img>}
-        {user?.username && <h1 style={{ maxWidth: "400px", wordBreak: "break-word" }}
->{`Username :${user?.username ? user?.username : ""}`}</h1>}
-        {user?.description && <h2 style={{ maxWidth: "400px", wordBreak: "break-word" }}
->{`Description :${user.description}`}</h2>}
-        {user?.username && ( <FaUserPlus  title="Send Friend Request"className="button" onClick={handlerequest}/>)}
-        {message && <h3 className={`${error == true ? "error" : "success"}`}>{message}</h3>}
+        {user ? (
+          <div className="search-card">
+            {user.image && <img className="img" src={user.image} alt={user.username} />}
+            <h1>{user.username}</h1>
+            {user.description && <h2>{user.description}</h2>}
+            <div className="button" onClick={handlerequest} title="Send Friend Request">
+              <FaUserPlus />
+            </div>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>
+              <FaUserFriends style={{ fontSize: "3rem", opacity: 0.2, marginBottom: "16px" }} />
+              <span>Select a user to connect</span>
+            </p>
+          </div>
+        )}
+        {message && <div className={error ? "error" : "success"}>{message}</div>}
       </div>
     </>
   );
