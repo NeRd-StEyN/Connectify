@@ -1,18 +1,21 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { Spinner } from "../Spinner";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
-import { FaCamera, FaTimes, FaCheck } from "react-icons/fa"; // camera icon
-import "./Myself.css"; // custom styles
-import { friends } from "../api/api";
-import { pendingrequest } from "../api/api";
-import { FaSave } from "react-icons/fa";
-import { acceptFriendRequest, rejectFriendRequest } from "../api/api";
+import { FaCamera, FaTimes, FaCheck, FaSave } from "react-icons/fa";
+import { friends, pendingrequest, acceptFriendRequest, rejectFriendRequest } from "../api/api";
 import { IoLogOut } from "react-icons/io5";
+import "./Myself.css";
 
 export const Myself = () => {
   const [user, setUser] = useState(null);
-
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingCrop, setLoadingCrop] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [loadingLogout, setLoadingLogout] = useState(false);
 
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState("");
@@ -33,17 +36,18 @@ export const Myself = () => {
 
   const togglePending = () => {
     setShowPending(prev => !prev);
-    setShowFriends(false); // close others
+    setShowFriends(false);
   };
 
   const toggleFriends = () => {
     setShowFriends(prev => !prev);
-    setShowPending(false); // close others
+    setShowPending(false);
   };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        setLoadingUser(true);
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/get-user`, {
           withCredentials: true,
         });
@@ -52,14 +56,16 @@ export const Myself = () => {
         setImage(res.data.image || "");
       } catch (err) {
         console.error("Failed to load user", err);
+      } finally {
+        setLoadingUser(false);
       }
     };
-
     fetchUser();
   }, []);
 
   const handleSave = async () => {
     try {
+      setLoadingSave(true);
       await axios.post(
         `${import.meta.env.VITE_API_URL}/edituser`,
         { d: desc, n: user.username },
@@ -70,36 +76,40 @@ export const Myself = () => {
     } catch (err) {
       console.error("Update failed", err);
       setMessage("Update failed.");
+    } finally {
+      setLoadingSave(false);
     }
   };
 
   useEffect(() => {
-    const fetchpending = async () => {
+    const fetchPending = async () => {
       try {
+        setLoadingPending(true);
         const res = await pendingrequest();
-        console.log("Pending request response:", res);
         setpending(res);
       } catch (err) {
         console.log("Error fetching pending requests:", err);
+      } finally {
+        setLoadingPending(false);
       }
     };
-
-    fetchpending();
+    fetchPending();
   }, []);
 
   useEffect(() => {
-    const fetchfriends = async () => {
+    const fetchFriends = async () => {
       try {
+        setLoadingFriends(true);
         const res = await friends();
         setshowfriends(res);
       } catch (err) {
         console.log(err);
+      } finally {
+        setLoadingFriends(false);
       }
     };
-
-    fetchfriends();
+    fetchFriends();
   }, []);
-
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -116,6 +126,7 @@ export const Myself = () => {
 
   const handleCropDone = async () => {
     try {
+      setLoadingCrop(true);
       const base64Image = await getCroppedImg(
         URL.createObjectURL(selectedFile),
         croppedAreaPixels
@@ -134,9 +145,10 @@ export const Myself = () => {
     } catch (err) {
       console.error("Crop/upload failed", err);
       setMessage("Crop failed");
+    } finally {
+      setLoadingCrop(false);
     }
   };
-
 
   const handleAccept = async (requestId) => {
     try {
@@ -156,8 +168,6 @@ export const Myself = () => {
     }
   };
 
-
-
   const handleUnfriend = async (requestId) => {
     try {
       await axios.post(
@@ -165,40 +175,31 @@ export const Myself = () => {
         { requestId },
         { withCredentials: true }
       );
-
-      // ✅ Correct the state update here
       setshowfriends(prev => prev.filter(f => f._id !== requestId));
     } catch (err) {
       console.error("Failed to unfriend", err);
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogoutAll = async () => {
+    setLoadingLogout(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/logout`, {}, { withCredentials: true });
+      await axios.post(`${import.meta.env.VITE_API_URL}/logout-all`, {}, { withCredentials: true });
+      localStorage.clear();
       window.location.href = "/";
     } catch (err) {
       console.error("Logout failed", err);
+    } finally {
+      setLoadingLogout(false);
     }
   };
 
-  const handleLogoutAll = async () => {
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/logout-all`, {}, { withCredentials: true });
-
-      localStorage.clear(); // also clear localStorage if needed
-      window.location.href = "/";
-    } catch (err) {
-      console.error("Complete logout failed", err);
-    }
-  };
-
-
-
-  if (!user) return <h2 style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>Loading...</h2>;
+  if (!user && loadingUser) return <Spinner />;
+  if (!user) return null;
 
   return (
     <div className="m">
+      {(loadingUser || loadingCrop || loadingSave || loadingFriends || loadingPending || loadingLogout) && <Spinner />}
       <div className="myself-container animate-in">
         <div className="logout-dropdown">
           <button
@@ -210,8 +211,7 @@ export const Myself = () => {
           </button>
           {dropdownOpen && (
             <div className="dropdown-menu">
-              <p onClick={handleLogout}>Logout (This Tab)</p>
-              <p onClick={handleLogoutAll}>Logout all devices</p>
+              <p onClick={handleLogoutAll}>Logout</p>
             </div>
           )}
         </div>
@@ -278,9 +278,6 @@ export const Myself = () => {
           </div>
         )}
 
-
-
-
         <div className="friends-section">
           <div className="section-title" onClick={togglePending}>
             <span>Pending Requests ({pending.length})</span>
@@ -327,12 +324,7 @@ export const Myself = () => {
             </ul>
           )}
         </div>
-
-
-
-
       </div>
-
     </div>
   );
 };

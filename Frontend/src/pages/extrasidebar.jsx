@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import "./extrasidebar.css";
 import axios from "axios";
+import { Spinner } from "../Spinner.jsx";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoClose } from "react-icons/io5";
 
 export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpen, setuser, val }) => {
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
       if (input.trim() === "") {
         setResults([]);
+        setLoading(false);
         return;
       }
 
+      setLoading(true);
       try {
         const endpoint = val === "search" ? "/search" : "/getchatlist";
         const res = await axios.post(
@@ -26,6 +30,8 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
         setShowDropdown(true);
       } catch (err) {
         console.error("Search failed", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -35,7 +41,6 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
 
   return (
     <div className="extra-sidebar-container">
-      {/* Search Toggle Icon (Hamburger / Search icon) */}
       <div
         className="hamburger-trigger"
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -53,6 +58,7 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
           placeholder={val === "search" ? "Search users by name..." : "Find a conversation..."}
           autoFocus={sidebarOpen}
         />
+        {loading && <Spinner />}
 
         {showDropdown && results.length > 0 && (
           <ul className="search-results animate-in">
@@ -61,7 +67,7 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
                 setuser(item);
                 setShowDropdown(false);
                 setinput("");
-                setSidebarOpen(false); // Close bar after selection
+                setSidebarOpen(false);
               }}>
                 <img src={item.image || `${import.meta.env.VITE_API_URL}/default-user.png`} alt={item.username} />
                 <span>{item.username}</span>

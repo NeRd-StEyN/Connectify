@@ -11,14 +11,14 @@ import {
   likeorunlikepost,
   commentonpost
 } from "../api/api";
-import { IoIosCreate } from "react-icons/io";
 import { FaCommentMedical } from "react-icons/fa";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
+import { Spinner } from "../Spinner";
 import { FaRegComment } from "react-icons/fa";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const Insta = () => {
   const [activeMenu, setActiveMenu] = useState("all");
@@ -30,16 +30,25 @@ export const Insta = () => {
   const [editCaption, setEditCaption] = useState("");
   const [commentInputs, setCommentInputs] = useState({});
   const [showComments, setShowComments] = useState({});
-  const BASE_URL = import.meta.env.VITE_API_URL;
+  const [loadingMyPost, setLoadingMyPost] = useState(false);
+  const [loadingAllPost, setLoadingAllPost] = useState(false);
 
   const { ref, inView } = useInView();
   const queryClient = useQueryClient();
 
   const fetchPostsPage = async ({ pageParam = 1 }) => {
-    const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
-      credentials: "include",
-    });
-    return res.json();
+    try {
+      setLoadingAllPost(true);
+      const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
+        credentials: "include",
+      });
+      return await res.json();
+    } catch (err) {
+      console.error("Error fetching all posts:", err);
+      throw err;
+    } finally {
+      setLoadingAllPost(false);
+    }
   };
 
   const {
@@ -58,7 +67,7 @@ export const Insta = () => {
     if (inView && hasNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage]);
+  }, [inView, hasNextPage, fetchNextPage]);
 
   const toggleComments = (postId) => {
     setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
@@ -66,10 +75,13 @@ export const Insta = () => {
 
   const fetchMyPosts = async () => {
     try {
+      setLoadingMyPost(true);
       const res = await getmypost();
       setMyposts(res);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoadingMyPost(false);
     }
   };
 
@@ -147,7 +159,7 @@ export const Insta = () => {
   const PostCard = ({ post, isMine }) => (
     <div className="postcard animate-in">
       <div className="postcard-header">
-        <img src={post.user?.image || `${import.meta.env.VITE_API_URL}/default-user.png`} alt="user" />
+        <img src={post.user?.image || `${BASE_URL}/default-user.png`} alt="user" />
         <span>{post.user?.username || "Anonymous"}</span>
       </div>
 
@@ -194,7 +206,7 @@ export const Insta = () => {
             <div className="comments-list">
               {post.comments.map((c, i) => (
                 <div key={i} className="comment-item">
-                  <img src={c.user?.image || `${import.meta.env.VITE_API_URL}/default-user.png`} alt="user" />
+                  <img src={c.user?.image || `${BASE_URL}/default-user.png`} alt="user" />
                   <p><strong>{c.user?.username}:</strong> {c.text}</p>
                 </div>
               ))}
@@ -216,47 +228,50 @@ export const Insta = () => {
   );
 
   return (
-    <div className="insta-page">
-      <div className="semicircle-menu">
-        <FaPlusSquare title="Create" onClick={() => setActiveMenu("add")} className="menu-icon" />
-        <FaUsers title="Feed" onClick={() => setActiveMenu("all")} className="menu-icon" />
-        <FaUserAlt title="My Posts" onClick={() => { setActiveMenu("my"); fetchMyPosts(); }} className="menu-icon" />
-      </div>
+    <>
+      {(loadingMyPost || loadingAllPost || loading) && <Spinner />}
+      <div className="insta-page">
+        <div className="semicircle-menu">
+          <FaPlusSquare title="Create" onClick={() => setActiveMenu("add")} className="menu-icon" />
+          <FaUsers title="Feed" onClick={() => setActiveMenu("all")} className="menu-icon" />
+          <FaUserAlt title="My Posts" onClick={() => { setActiveMenu("my"); fetchMyPosts(); }} className="menu-icon" />
+        </div>
 
-      <div className="largecontainer">
-        {activeMenu === "add" && (
-          <div className="inputarea animate-in">
-            <h2>Create New Post</h2>
-            <input type="text" placeholder="What's on your mind?" value={caption} onChange={(e) => setcaption(e.target.value)} />
-            <label htmlFor="upload" className="upload-label">
-              <MdPermMedia className="imgg" />
-              <span>{image ? image.name : "Select Media"}</span>
-            </label>
-            <input type="file" accept="image/*,video/*" id="upload" style={{ display: "none" }} onChange={(e) => setimage(e.target.files[0])} />
-            <button className="addd" onClick={handleaddpost} disabled={loading}>
-              {loading ? "Posting..." : "Post Now"}
-            </button>
-          </div>
-        )}
-
-        {activeMenu === "my" && (
-          <div className="viewarea">
-            <h1>My Posts</h1>
-            {myposts.map(post => <PostCard key={post._id} post={post} isMine={true} />)}
-          </div>
-        )}
-
-        {activeMenu === "all" && (
-          <div className="showarea">
-            <h1>Feed</h1>
-            <div className="feed-grid">
-              {data?.pages.flat().map(post => <PostCard key={post._id} post={post} isMine={false} />)}
+        <div className="largecontainer">
+          {activeMenu === "add" && (
+            <div className="inputarea animate-in">
+              <h2>Create New Post</h2>
+              <input type="text" placeholder="What's on your mind?" value={caption} onChange={(e) => setcaption(e.target.value)} />
+              <label htmlFor="upload" className="upload-label">
+                <MdPermMedia className="imgg" />
+                <span>{image ? image.name : "Select Media"}</span>
+              </label>
+              <input type="file" accept="image/*,video/*" id="upload" style={{ display: "none" }} onChange={(e) => setimage(e.target.files[0])} />
+              <button className="addd" onClick={handleaddpost} disabled={loading}>
+                {loading ? "Posting..." : "Post Now"}
+              </button>
             </div>
-            {isFetchingNextPage && <p className="loading-more">Loading more...</p>}
-            <div ref={ref} />
-          </div>
-        )}
+          )}
+
+          {activeMenu === "my" && (
+            <div className="viewarea">
+              <h1>My Posts</h1>
+              {myposts.map(post => <PostCard key={post._id} post={post} isMine={true} />)}
+            </div>
+          )}
+
+          {activeMenu === "all" && (
+            <div className="showarea">
+              <h1>Feed</h1>
+              <div className="feed-grid">
+                {data?.pages.flat().map(post => <PostCard key={post._id} post={post} isMine={false} />)}
+              </div>
+              {isFetchingNextPage && <p className="loading-more">Loading more...</p>}
+              <div ref={ref} />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
