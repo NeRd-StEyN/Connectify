@@ -16,14 +16,33 @@ const User = require("./models/users");
 const FriendRequest = require("./models/FriendRequest");
 const sendOtpEmail = require("./nodemailer/mailer");
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception thrown:", err);
+});
+
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+const allowedOrigins = [
+  "https://connectify2025.vercel.app",
+  "http://localhost:5173"
+];
+
 app.use(cors({
-  origin: ["https://connectify2025.vercel.app", "http://localhost:5173"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
 
@@ -35,19 +54,16 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://connectify2025.vercel.app",
-      "http://localhost:5173"
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
   },
-  transports: ["websocket", "polling"] // IMPORTANT
+  transports: ["websocket", "polling"],
+  allowEIO3: true
 });
 
 
 const userSocketMap = new Map(); // userId => socketId
-app.use(express.static(path.join(__dirname, "public")));
 
 
 let storedOtp = "";
@@ -573,6 +589,6 @@ io.on("connection", (socket) => {
 
 
 const PORT = process.env.PORT || 7000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-})
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
