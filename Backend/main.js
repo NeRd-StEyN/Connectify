@@ -28,17 +28,23 @@ app.use(cors({
 }));
 
 
-
 const http = require("http");
 const { Server } = require("socket.io");
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: ["https://connectify2025.vercel.app", "http://localhost:5173"], // Added local origin
+    origin: [
+      "https://connectify2025.vercel.app",
+      "http://localhost:5173"
+    ],
+    methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  transports: ["websocket", "polling"] // IMPORTANT
 });
+
 
 const userSocketMap = new Map(); // userId => socketId
 app.use(express.static(path.join(__dirname, "public")));
@@ -49,7 +55,6 @@ let otpEmail = "";
 app.get("/", (req, res) => {
   res.status(200).send("API is running");
 });
-
 
 app.post("/signup", async (req, res) => {
   try {
