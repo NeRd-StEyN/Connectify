@@ -16,6 +16,16 @@ const User = require("./models/users");
 const FriendRequest = require("./models/FriendRequest");
 const sendOtpEmail = require("./nodemailer/mailer");
 
+// --- CRITICAL ERROR HANDLING ---
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ UNHANDLED REJECTION at:", promise, "reason:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ UNCAUGHT EXCEPTION:", err);
+  // Optionally: process.exit(1) if you want to force a restart
+});
+
 const app = express();
 app.set("trust proxy", 1);
 
@@ -55,7 +65,14 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: true, // Reflect request origin
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.includes("railway.app")) {
+      callback(null, true);
+    } else {
+      console.warn("🚫 CORS Blocked Origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
   optionsSuccessStatus: 200
@@ -608,13 +625,16 @@ io.on("connection", (socket) => {
 
 
 const PORT = process.env.PORT || 7000;
-console.log(`Starting server on 0.0.0.0:${PORT}...`);
 
-server.listen(PORT, "0.0.0.0", (err) => {
-  if (err) {
-    console.error("❌ CRITICAL: Server failed to listen:", err);
-    process.exit(1);
-  }
+server.on('error', (e) => {
+  console.error("❌ SERVER ERROR event:", e);
+});
+
+console.log(`Attempting to start server on port ${PORT}...`);
+
+server.listen(PORT, "0.0.0.0", () => {
   const addr = server.address();
-  console.log(`🚀 Server fully started and listening on ${addr.address}:${addr.port}`);
+  console.log(`🚀 SERVER IS LIVE!`);
+  console.log(`Listening on: ${addr.address}:${addr.port}`);
+  console.log(`Working directory: ${process.cwd()}`);
 });
