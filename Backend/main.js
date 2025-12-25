@@ -16,15 +16,35 @@ const User = require("./models/users");
 const FriendRequest = require("./models/FriendRequest");
 const sendOtpEmail = require("./nodemailer/mailer");
 
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
-});
-
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception thrown:", err);
-});
-
 const app = express();
+app.set("trust proxy", 1);
+
+console.log("Node version:", process.version);
+console.log("Memory limit (MB):", process.env.MEMORY_LIMIT || "Not set");
+console.log("Environment PORT:", process.env.PORT);
+
+// Request Logger
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - ${res.statusCode} (${duration}ms) - Origin: ${req.headers.origin || 'none'}`);
+  });
+  next();
+});
+
+// HEALTH CHECK - Moved to top for reliability
+app.get("/health", (req, res) => {
+  console.log("Health check hit");
+  res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+});
+
+// Heartbeat to confirm process is alive
+setInterval(() => {
+  const mem = process.memoryUsage();
+  console.log(`Heartbeat - RSS: ${(mem.rss / 1024 / 1024).toFixed(2)}MB`);
+}, 30000);
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -35,15 +55,10 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: true, // Reflect request origin
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 
@@ -54,13 +69,17 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true,
   },
+  pingTimeout: 60000,
+  pingInterval: 25000,
   transports: ["websocket", "polling"],
   allowEIO3: true
 });
+
+console.log("Socket.io initialized");
 
 
 const userSocketMap = new Map(); // userId => socketId
@@ -563,7 +582,7 @@ app.get("/insta/post/:id/comments", async (req, res) => {
 // Inside io.on("connection") in your existing backend
 
 io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
+  console.log("Socket connected:", socket.id, "from:", socket.handshake.headers.origin);
 
   socket.on("register", (userId) => {
     userSocketMap.set(userId, socket.id);
@@ -589,6 +608,13 @@ io.on("connection", (socket) => {
 
 
 const PORT = process.env.PORT || 7000;
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+console.log(`Starting server on 0.0.0.0:${PORT}...`);
+
+server.listen(PORT, "0.0.0.0", (err) => {
+  if (err) {
+    console.error("❌ CRITICAL: Server failed to listen:", err);
+    process.exit(1);
+  }
+  const addr = server.address();
+  console.log(`🚀 Server fully started and listening on ${addr.address}:${addr.port}`);
 });
