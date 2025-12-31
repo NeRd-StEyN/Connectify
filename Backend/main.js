@@ -65,8 +65,8 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.includes("railway.app")) {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.includes("onrender.com")) {
       callback(null, true);
     } else {
       console.warn("🚫 CORS Blocked Origin:", origin);
