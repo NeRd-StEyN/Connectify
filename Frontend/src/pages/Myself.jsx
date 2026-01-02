@@ -8,9 +8,8 @@ import { friends, pendingrequest, acceptFriendRequest, rejectFriendRequest } fro
 import { IoLogOut } from "react-icons/io5";
 import "./Myself.css";
 
-const DEFAULT_IMAGE = "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png";
-
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+const DEFAULT_IMAGE = `${BASE_URL}/default-user.png`;
 
 export const Myself = () => {
   const [user, setUser] = useState(null);

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+const DEFAULT_IMAGE = `${BASE_URL}/default-user.png`;
 
 export const Home = () => {
   const navigate = useNavigate();
