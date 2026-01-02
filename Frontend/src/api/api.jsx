@@ -1,18 +1,18 @@
 import axios from "axios";
 
 axios.defaults.withCredentials = true;
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
 
 // Signu
 export const signup = async (data) => {
-  const res = await axios.post(`${BASE_URL}/signup`, data,{withCredentials: true});
+  const res = await axios.post(`${BASE_URL}/signup`, data, { withCredentials: true });
   return res.data;
 };
 
 // Login
 export const login = async (data) => {
-  const res = await axios.post(`${BASE_URL}/login`, data,{withCredentials: true});
+  const res = await axios.post(`${BASE_URL}/login`, data, { withCredentials: true });
   return res.data;
 };
 
@@ -35,9 +35,8 @@ export const getUser = async () => {
   return res.data;
 };
 
-export const sendrequest=async(recipientId)=>
-{
-  const res=await axios.post(`${BASE_URL}/sendFriendRequest`,{recipientId}, {
+export const sendrequest = async (recipientId) => {
+  const res = await axios.post(`${BASE_URL}/sendFriendRequest`, { recipientId }, {
     withCredentials: true, // if using cookies for auth
   });
   return res.data;
@@ -50,9 +49,8 @@ export const pendingrequest = async () => {
   return res.data;
 };
 
-export const friends=async()=>
-{
-  const res=await axios.get(`${BASE_URL}/friends`,{withCredentials:true});
+export const friends = async () => {
+  const res = await axios.get(`${BASE_URL}/friends`, { withCredentials: true });
   return res.data;
 }
 
@@ -60,7 +58,7 @@ export const friends=async()=>
 
 export const acceptFriendRequest = async (requestId) => {
   return await axios.post(
-    `${import.meta.env.VITE_API_URL}/friend-requests/respond`,
+    `${BASE_URL}/friend-requests/respond`,
     { requestId, action: "accept" },
     { withCredentials: true }
   );
@@ -68,7 +66,7 @@ export const acceptFriendRequest = async (requestId) => {
 
 export const rejectFriendRequest = async (requestId) => {
   return await axios.post(
-    `${import.meta.env.VITE_API_URL}/friend-requests/respond`,
+    `${BASE_URL}/friend-requests/respond`,
     { requestId, action: "reject" },
     { withCredentials: true }
   );
@@ -85,52 +83,45 @@ export const addpost = async ({ caption, image }) => {
 };
 
 
-export const getallpost=async()=>
-{
-  const res=await axios.get(`${BASE_URL}/insta/posts`);
+export const getallpost = async () => {
+  const res = await axios.get(`${BASE_URL}/insta/posts`);
   return res.data;
 }
 
 
-export const getmypost=async()=>
-{
-  const res=await axios.get(`${BASE_URL}/insta/myposts`);
+export const getmypost = async () => {
+  const res = await axios.get(`${BASE_URL}/insta/myposts`);
   return res.data;
 }
 
 
-export const editpost=async({caption,image,id})=>
-{
-  const res=await axios.put(`${BASE_URL}/insta/post/${id}`,{caption,image}, { withCredentials: true });
-  return res.data;
-}
-
-
-
-export const deletepost=async(id)=>
-{
-  const res=await axios.delete(`${BASE_URL}/insta/post/${id}`, { withCredentials: true });
+export const editpost = async ({ caption, image, id }) => {
+  const res = await axios.put(`${BASE_URL}/insta/post/${id}`, { caption, image }, { withCredentials: true });
   return res.data;
 }
 
 
 
-export const likeorunlikepost=async(id)=>
-{
-  const res=await axios.post(`${BASE_URL}/insta/post/${id}/like`);
+export const deletepost = async (id) => {
+  const res = await axios.delete(`${BASE_URL}/insta/post/${id}`, { withCredentials: true });
   return res.data;
 }
 
 
-export const commentonpost=async({id,text})=>
-{
-  const res=await axios.post(`${BASE_URL}/insta/post/${id}/comment`,{text}, { withCredentials: true });
+
+export const likeorunlikepost = async (id) => {
+  const res = await axios.post(`${BASE_URL}/insta/post/${id}/like`);
   return res.data;
 }
 
-export const getcommentspost=async(id)=>
-{
-  const res=await axios.get(`${BASE_URL}/insta/post/${id}/comments`, { withCredentials: true });
+
+export const commentonpost = async ({ id, text }) => {
+  const res = await axios.post(`${BASE_URL}/insta/post/${id}/comment`, { text }, { withCredentials: true });
+  return res.data;
+}
+
+export const getcommentspost = async (id) => {
+  const res = await axios.get(`${BASE_URL}/insta/post/${id}/comments`, { withCredentials: true });
   return res.data;
 }
 

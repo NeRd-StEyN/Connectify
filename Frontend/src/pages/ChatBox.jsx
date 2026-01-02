@@ -9,7 +9,7 @@ import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import { encryptText, decryptText } from "./encryption";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const socket = io(BASE_URL, { withCredentials: true });
 
 export const ChatBox = ({ friend, sidebarOpen }) => {

@@ -6,6 +6,7 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import { IoClose } from "react-icons/io5";
 
 export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpen, setuser, val }) => {
+  const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,7 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
       try {
         const endpoint = val === "search" ? "/search" : "/getchatlist";
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}${endpoint}`,
+          `${BASE_URL}${endpoint}`,
           { search: input },
           { withCredentials: true }
         );
@@ -69,7 +70,7 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
                 setinput("");
                 setSidebarOpen(false);
               }}>
-                <img src={item.image || `${import.meta.env.VITE_API_URL}/default-user.png`} alt={item.username} />
+                <img src={item.image || `${BASE_URL}/default-user.png`} alt={item.username} />
                 <span>{item.username}</span>
               </li>
             ))}

@@ -6,7 +6,7 @@ import { login, signup, sendOtp, verifyOtp } from "../api/api";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
 export const Home = () => {
   const navigate = useNavigate();

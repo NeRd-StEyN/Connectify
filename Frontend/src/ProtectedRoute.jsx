@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import axios from "axios";
-import {Spinner} from "./Spinner.jsx";
-export const ProtectedRoute = ({children}) => {
+import { Spinner } from "./Spinner.jsx";
+export const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null); // null means loading
 
   useEffect(() => {
     const verifyToken = async () => {
+      const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/verify-token`, {
+        const res = await axios.get(`${BASE_URL}/verify-token`, {
           withCredentials: true, // Send cookies
         });
 

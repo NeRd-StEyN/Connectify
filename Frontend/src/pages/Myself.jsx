@@ -8,6 +8,8 @@ import { friends, pendingrequest, acceptFriendRequest, rejectFriendRequest } fro
 import { IoLogOut } from "react-icons/io5";
 import "./Myself.css";
 
+const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+
 export const Myself = () => {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -48,7 +50,7 @@ export const Myself = () => {
     const fetchUser = async () => {
       try {
         setLoadingUser(true);
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/get-user`, {
+        const res = await axios.get(`${BASE_URL}/get-user`, {
           withCredentials: true,
         });
         setUser(res.data);
@@ -67,7 +69,7 @@ export const Myself = () => {
     try {
       setLoadingSave(true);
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/edituser`,
+        `${BASE_URL}/edituser`,
         { d: desc, n: user.username },
         { withCredentials: true }
       );
@@ -135,7 +137,7 @@ export const Myself = () => {
       setShowCropper(false);
 
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/upload-image`,
+        `${BASE_URL}/upload-image`,
         { image: base64Image },
         { withCredentials: true }
       );
@@ -171,7 +173,7 @@ export const Myself = () => {
   const handleUnfriend = async (requestId) => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/friends/remove`,
+        `${BASE_URL}/friends/remove`,
         { requestId },
         { withCredentials: true }
       );
@@ -184,7 +186,7 @@ export const Myself = () => {
   const handleLogoutAll = async () => {
     setLoadingLogout(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/logout-all`, {}, { withCredentials: true });
+      await axios.post(`${BASE_URL}/logout-all`, {}, { withCredentials: true });
       localStorage.clear();
       window.location.href = "/";
     } catch (err) {

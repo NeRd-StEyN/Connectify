@@ -18,7 +18,7 @@ import { Spinner } from "../Spinner";
 import { FaRegComment } from "react-icons/fa";
 
 const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
 export const Insta = () => {
   const [activeMenu, setActiveMenu] = useState("all");
