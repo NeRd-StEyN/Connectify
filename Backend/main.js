@@ -64,19 +64,21 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.includes("onrender.com")) {
       callback(null, true);
     } else {
       console.warn("🚫 CORS Blocked Origin:", origin);
-      callback(new Error("Not allowed by CORS"));
+      callback(null, false); // Better to return false than an error to avoid crashing
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
   optionsSuccessStatus: 200
-}));
+};
+
+app.use(cors(corsOptions));
 
 
 const http = require("http");
@@ -85,11 +87,7 @@ const { Server } = require("socket.io");
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: {
-    origin: true,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
+  cors: corsOptions,
   pingTimeout: 60000,
   pingInterval: 25000,
   transports: ["websocket", "polling"],
@@ -624,7 +622,7 @@ io.on("connection", (socket) => {
 });
 
 
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 9000;
 
 server.on('error', (e) => {
   console.error("❌ SERVER ERROR event:", e);
