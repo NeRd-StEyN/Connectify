@@ -8,6 +8,8 @@ import { friends, pendingrequest, acceptFriendRequest, rejectFriendRequest } fro
 import { IoLogOut } from "react-icons/io5";
 import "./Myself.css";
 
+const DEFAULT_IMAGE = "https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png";
+
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
 export const Myself = () => {
@@ -55,7 +57,7 @@ export const Myself = () => {
         });
         setUser(res.data);
         setDesc(res.data.description || "");
-        setImage(res.data.image || "");
+        setImage(res.data.image || DEFAULT_IMAGE);
       } catch (err) {
         console.error("Failed to load user", err);
       } finally {
@@ -220,7 +222,7 @@ export const Myself = () => {
 
         <div className="profile-header">
           <div className="profile-pic-wrapper">
-            <img src={image} alt="Profile" className="profile-pic" />
+            <img src={image || DEFAULT_IMAGE} alt="Profile" className="profile-pic" />
             <label htmlFor="fileInput" className="file-upload-icon">
               <FaCamera />
             </label>
@@ -265,18 +267,19 @@ export const Myself = () => {
                 onCropComplete={onCropComplete}
               />
             </div>
-            <input
-              type="range"
-              min={1}
-              max={3}
-              step={0.1}
-              value={zoom}
-              onChange={(e) => setZoom(e.target.value)}
-              className="zoom-slider"
-            />
-            <button onClick={handleCropDone} className="crop-btn">
-              Crop & Upload
-            </button>
+            <div className="cropper-controls">
+              <FaTimes onClick={() => setShowCropper(false)} className="crop-cancel" title="Cancel" />
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.1}
+                value={zoom}
+                onChange={(e) => setZoom(e.target.value)}
+                className="zoom-slider"
+              />
+              <FaCheck onClick={handleCropDone} className="crop-confirm" title="Confirm" />
+            </div>
           </div>
         )}
 
