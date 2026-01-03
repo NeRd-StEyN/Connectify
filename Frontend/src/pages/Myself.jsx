@@ -9,7 +9,7 @@ import { IoLogOut } from "react-icons/io5";
 import "./Myself.css";
 
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
-const DEFAULT_IMAGE = `${BASE_URL}/default-user.png`;
+const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 
 export const Myself = () => {
   const [user, setUser] = useState(null);
@@ -221,7 +221,12 @@ export const Myself = () => {
 
         <div className="profile-header">
           <div className="profile-pic-wrapper">
-            <img src={image || DEFAULT_IMAGE} alt="Profile" className="profile-pic" />
+            <img
+              src={image && !image.includes('undefined') ? image : DEFAULT_IMAGE}
+              alt="Profile"
+              className="profile-pic"
+              onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+            />
             <label htmlFor="fileInput" className="file-upload-icon">
               <FaCamera />
             </label>

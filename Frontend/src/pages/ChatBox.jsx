@@ -10,6 +10,7 @@ import data from "@emoji-mart/data";
 import { encryptText, decryptText } from "./encryption";
 
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 const socket = io(BASE_URL, { withCredentials: true });
 
 export const ChatBox = ({ friend, sidebarOpen }) => {
@@ -99,7 +100,11 @@ export const ChatBox = ({ friend, sidebarOpen }) => {
   return (
     <div className="chatbox-container">
       <div className={`uu ${sidebarOpen ? "ope" : "clos"}`}>
-        <img src={friend.image} alt={friend.username} />
+        <img
+          src={friend.image && !friend.image.includes('undefined') ? friend.image : DEFAULT_IMAGE}
+          alt={friend.username}
+          onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+        />
         <h3>{friend.username}</h3>
       </div>
 

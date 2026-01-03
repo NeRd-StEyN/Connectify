@@ -7,6 +7,7 @@ import { IoClose } from "react-icons/io5";
 
 export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpen, setuser, val }) => {
   const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+  const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -70,7 +71,11 @@ export const ExtraSidebar = ({ input, setinput, setSidebarOpen, user, sidebarOpe
                 setinput("");
                 setSidebarOpen(false);
               }}>
-                <img src={item.image || `${BASE_URL}/default-user.png`} alt={item.username} />
+                <img
+                  src={item.image && !item.image.includes('undefined') ? item.image : DEFAULT_IMAGE}
+                  alt={item.username}
+                  onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+                />
                 <span>{item.username}</span>
               </li>
             ))}

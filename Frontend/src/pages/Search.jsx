@@ -4,6 +4,9 @@ import "./Search.css";
 import { FaUserPlus } from "react-icons/fa";
 import { FaUserFriends } from "react-icons/fa";
 import { ExtraSidebar } from "./extrasidebar";
+const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
+const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
+
 export const Search = () => {
   const [input, setinput] = useState("");
   const [user, setuser] = useState(null);
@@ -44,7 +47,12 @@ export const Search = () => {
       <div className="searched">
         {user ? (
           <div className="search-card">
-            {user.image && <img className="img" src={user.image} alt={user.username} />}
+            <img
+              className="img"
+              src={user.image && !user.image.includes('undefined') ? user.image : DEFAULT_IMAGE}
+              alt={user.username}
+              onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+            />
             <h1>{user.username}</h1>
             {user.description && <h2>{user.description}</h2>}
             <div className="button" onClick={handlerequest} title="Send Friend Request">

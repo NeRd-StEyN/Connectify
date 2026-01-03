@@ -19,7 +19,7 @@ import { FaRegComment } from "react-icons/fa";
 
 const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
-const DEFAULT_IMAGE = `${BASE_URL}/default-user.png`;
+const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 
 export const Insta = () => {
   const [activeMenu, setActiveMenu] = useState("all");
@@ -160,7 +160,11 @@ export const Insta = () => {
   const PostCard = ({ post, isMine }) => (
     <div className="postcard animate-in">
       <div className="postcard-header">
-        <img src={post.user?.image || DEFAULT_IMAGE} alt="user" />
+        <img
+          src={post.user?.image && !post.user.image.includes('undefined') ? post.user.image : DEFAULT_IMAGE}
+          alt="user"
+          onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+        />
         <span>{post.user?.username || "Anonymous"}</span>
       </div>
 
@@ -207,7 +211,11 @@ export const Insta = () => {
             <div className="comments-list">
               {post.comments.map((c, i) => (
                 <div key={i} className="comment-item">
-                  <img src={c.user?.image || DEFAULT_IMAGE} alt="user" />
+                  <img
+                    src={c.user?.image && !c.user.image.includes('undefined') ? c.user.image : DEFAULT_IMAGE}
+                    alt="user"
+                    onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+                  />
                   <p><strong>{c.user?.username}:</strong> {c.text}</p>
                 </div>
               ))}
