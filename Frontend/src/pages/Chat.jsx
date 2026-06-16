@@ -1,45 +1,51 @@
 import { useState } from "react";
-import { ExtraSidebar } from "./extrasidebar"; // your sidebar
+import { ChatSidebar } from "./ChatSidebar";
 import { ChatBox } from "./ChatBox";
 import { IoIosChatbubbles } from "react-icons/io";
-export const Chat = () => {
-  const [input, setinput] = useState("");
-  const [user, setuser] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  return (
-    <div style={{ display: "flex" }}>
-      <ExtraSidebar
-        input={input}
-        val="chat"
-        setSidebarOpen={setSidebarOpen}
-        sidebarOpen={sidebarOpen}
-        setinput={setinput}
-        user={user}
-        setuser={setuser}
-      />
+import { useSocket } from "../hooks/useSocket";
+import "./Chat.css";
 
-      {user ? (
-        <ChatBox friend={user} sidebarOpen={sidebarOpen} />
-      ) : (
+export const Chat = () => {
+  const [user, setuser] = useState(null);
+  const userId = localStorage.getItem("userId");
+  const { socket, onlineUsers, typingUsers } = useSocket(userId);
+
+  return (
+    <div className="chat-page-container">
+      <div className={`chat-sidebar-wrapper ${user ? "hide-on-mobile" : ""}`}>
+        <ChatSidebar
+          user={user}
+          setuser={setuser}
+          onlineUsers={onlineUsers}
+        />
+      </div>
+
+      <div className={`chat-main-wrapper ${!user ? "hide-on-mobile" : ""}`}>
+        {user ? (
+          <ChatBox 
+            friend={user} 
+            socket={socket} 
+            typingUsers={typingUsers} 
+            onBack={() => setuser(null)}
+          />
+        ) : (
         <div
           style={{
             flexGrow: 1,
             display: "flex",
-            margin: "0 auto 0 100px",
-
             justifyContent: "center",
             alignItems: "center",
-            height: "100vh", // make sure it's full height
+            height: "100vh",
           }}
         >
           <p
             style={{
-              margin: "0 auto 0 auto",
               fontWeight: "bolder",
               fontSize: "1.5rem",
               display: "flex",
               alignItems: "center",
               gap: "1rem",
+              color: "#aaa"
             }}
           >
             <IoIosChatbubbles style={{ fontSize: "2.5rem" }} />
@@ -47,7 +53,7 @@ export const Chat = () => {
           </p>
         </div>
       )}
+      </div>
     </div>
-
   );
 };

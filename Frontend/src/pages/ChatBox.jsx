@@ -1,155 +1,609 @@
-import { useEffect, useState, useRef } from "react";
-import io from "socket.io-client";
+import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import "./chatbox.css";
 import { IoSend } from "react-icons/io5";
-import { FaSmile } from "react-icons/fa";
-import { FaImages } from "react-icons/fa6";
+import { FaSmile, FaImages, FaReply, FaTrash, FaSearch, FaTimes, FaCheck, FaCheckDouble } from "react-icons/fa";
+import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import { encryptText, decryptText } from "./encryption";
 
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
-const socket = io(BASE_URL, { withCredentials: true });
 
-export const ChatBox = ({ friend, sidebarOpen }) => {
+const QUICK_REACTIONS = ["❤️", "😂", "😮", "😢", "👍", "🔥"];
+
+function formatMessageTime(timestamp) {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (diffDays === 1) return `Yesterday ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  return date.toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDateDivider(timestamp) {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+}
+
+function shouldShowDivider(messages, index) {
+  if (index === 0) return true;
+  const prev = new Date(messages[index - 1].timestamp);
+  const curr = new Date(messages[index].timestamp);
+  return prev.toDateString() !== curr.toDateString();
+}
+
+export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [image, setImage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId, isMine }
+  const [reactionPicker, setReactionPicker] = useState(null); // messageId
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [scrollAtBottom, setScrollAtBottom] = useState(true);
+
   const scrollRef = useRef(null);
+  const containerRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const oldestTimestampRef = useRef(null);
 
   const userId = localStorage.getItem("userId");
+  const isTyping = typingUsers && typingUsers.has(friend?._id);
 
+  // ── Fetch messages ──────────────────────────────────────────
+  const fetchMessages = useCallback(async (before = null) => {
+    if (!friend?._id || !userId) return;
+    try {
+      const params = { limit: 50 };
+      if (before) params.before = before;
+      const res = await axios.get(`${BASE_URL}/messages/${friend._id}`, {
+        withCredentials: true,
+        params,
+      });
+      const rawMsgs = res.data.messages || res.data;
+      const msgs = rawMsgs.map(m => ({
+        ...m,
+        content: decryptText(m.content || ""),
+        replyTo: m.replyTo ? { ...m.replyTo, content: decryptText(m.replyTo.content || "") } : m.replyTo
+      }));
+
+      if (before) {
+        setMessages(prev => [...msgs, ...prev]);
+      } else {
+        setMessages(msgs);
+      }
+      setHasMore(res.data.hasMore ?? msgs.length === 50);
+      if (msgs.length > 0) {
+        oldestTimestampRef.current = msgs[0].timestamp;
+      }
+      // Notify sender we read their messages
+      if (socket) {
+        socket.emit("mark-read", { to: friend._id, from: userId });
+      }
+    } catch (err) {
+      console.error("Fetch failed", err);
+    }
+  }, [friend, userId, socket]);
+
+  useEffect(() => {
+    if (!friend?._id || !userId || !socket) return;
+    setMessages([]);
+    setHasMore(true);
+    setReplyTo(null);
+    setSearchQuery("");
+    setShowSearch(false);
+    fetchMessages();
+  }, [friend, userId, socket]);
+
+  // ── Receive message via socket ─────────────────────────────
+  useEffect(() => {
+    if (!socket) return;
+    const receiveMessageHandler = (msg) => {
+      if (msg.sender === friend._id || msg.recipient === friend._id) {
+        const decryptedMsg = { 
+          ...msg, 
+          content: decryptText(msg.content || ""),
+          replyTo: msg.replyTo ? { ...msg.replyTo, content: decryptText(msg.replyTo.content || "") } : msg.replyTo
+        };
+        setMessages((prev) => [...prev, decryptedMsg]);
+        // Mark as read immediately if chat is open
+        if (socket) socket.emit("mark-read", { to: friend._id, from: userId });
+      }
+    };
+    socket.on("receive-message", receiveMessageHandler);
+    return () => socket.off("receive-message", receiveMessageHandler);
+  }, [socket, friend, userId]);
+
+  // ── Read receipts from friend ──────────────────────────────
+  useEffect(() => {
+    if (!socket) return;
+    const handleMessagesRead = ({ by }) => {
+      if (by === friend._id) {
+        setMessages(prev => prev.map(m =>
+          m.sender === userId ? { ...m, read: true } : m
+        ));
+      }
+    };
+    socket.on("messages-read", handleMessagesRead);
+    return () => socket.off("messages-read", handleMessagesRead);
+  }, [socket, friend, userId]);
+
+  // ── Message deleted by friend ──────────────────────────────
+  useEffect(() => {
+    if (!socket) return;
+    const handleDeleted = ({ messageId, deleteFor }) => {
+      if (deleteFor === "everyone") {
+        setMessages(prev => prev.map(m =>
+          m._id === messageId ? { ...m, content: "", image: undefined, deleted: true } : m
+        ));
+      }
+    };
+    socket.on("message-deleted", handleDeleted);
+    return () => socket.off("message-deleted", handleDeleted);
+  }, [socket]);
+
+  // ── Reactions from friend ──────────────────────────────────
+  useEffect(() => {
+    if (!socket) return;
+    const handleReaction = ({ messageId, reactions }) => {
+      setMessages(prev => prev.map(m =>
+        m._id === messageId ? { ...m, reactions } : m
+      ));
+    };
+    socket.on("message-reaction", handleReaction);
+    return () => socket.off("message-reaction", handleReaction);
+  }, [socket]);
+
+  // ── Auto-scroll ────────────────────────────────────────────
+  useEffect(() => {
+    if (scrollAtBottom) {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isTyping, scrollAtBottom]);
+
+  const handleScroll = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    setScrollAtBottom(atBottom);
+    // Load older messages when scrolled to top
+    if (el.scrollTop < 80 && hasMore && !loadingOlder) {
+      loadOlderMessages();
+    }
+  };
+
+  const loadOlderMessages = async () => {
+    if (!hasMore || loadingOlder) return;
+    setLoadingOlder(true);
+    const el = containerRef.current;
+    const prevScrollHeight = el?.scrollHeight;
+    await fetchMessages(oldestTimestampRef.current);
+    setLoadingOlder(false);
+    if (el) {
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight - prevScrollHeight;
+      });
+    }
+  };
+
+  // ── Typing ─────────────────────────────────────────────────
+  const handleTyping = (e) => {
+    setText(e.target.value);
+    if (socket) {
+      socket.emit("typing", { to: friend._id, from: userId });
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socket.emit("stop-typing", { to: friend._id, from: userId });
+      }, 2000);
+    }
+  };
+
+  // ── Image upload ───────────────────────────────────────────
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setImage(reader.result); // base64 encoded
+      reader.onloadend = () => setImage(reader.result);
       reader.readAsDataURL(file);
     }
     e.target.value = null;
   };
 
-  useEffect(() => {
-    if (!friend?._id || !userId) return;
-
-    socket.emit("register", userId);
-
-    const fetchMessages = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/messages/${friend._id}`, {
-          withCredentials: true,
-        });
-        setMessages(res.data);
-      } catch (err) {
-        console.error("Fetch failed", err);
-      }
-    };
-
-    fetchMessages();
-
-    socket.on("receive-message", (msg) => {
-      if (msg.sender === friend._id || msg.recipient === friend._id) {
-        setMessages((prev) => [...prev, msg]);
-      }
-    });
-
-    return () => socket.off("receive-message");
-  }, [friend, userId]);
-
+  // ── Send ───────────────────────────────────────────────────
   const sendMessage = async () => {
-    if ((!text || [...text].filter((c) => c.trim() !== "").length === 0) && !image) return;
+    const trimmed = text.trim();
+    if (!trimmed && !image) return;
 
-    const encryptedText = encryptText(text);
+    if (socket) socket.emit("stop-typing", { to: friend._id, from: userId });
 
-    const msg = {
+    const encryptedText = encryptText(trimmed);
+
+    const optimisticMsg = {
+      _id: `temp_${Date.now()}`,
       sender: userId,
       recipient: friend._id,
-      content: encryptedText,
+      content: trimmed,
       image,
       timestamp: new Date(),
+      read: false,
+      replyTo: replyTo || null,
+      _sending: true,
     };
 
-    setMessages((prev) => [...prev, msg]);
-    socket.emit("send-message", { to: friend._id, message: msg });
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setText("");
+    setImage(null);
+    setReplyTo(null);
+    setScrollAtBottom(true);
 
     try {
-      await axios.post(
+      const res = await axios.post(
         `${BASE_URL}/send-message`,
         {
           recipientId: friend._id,
           content: encryptedText,
           image,
+          replyTo: replyTo?._id || null,
         },
         { withCredentials: true }
       );
+
+      // Replace optimistic with real message
+      setMessages(prev => prev.map(m =>
+        m._id === optimisticMsg._id
+          ? { ...res.data, content: trimmed, replyTo: m.replyTo }
+          : m
+      ));
+
+      if (socket) {
+        socket.emit("send-message", {
+          to: friend._id,
+          message: { ...res.data, content: encryptedText },
+        });
+      }
     } catch (err) {
       console.error("Send failed", err);
+      setMessages(prev => prev.map(m =>
+        m._id === optimisticMsg._id ? { ...m, _failed: true } : m
+      ));
     }
+  };
 
-    setText("");
-    setImage(null);
+  // ── Delete ─────────────────────────────────────────────────
+  const deleteMessage = async (messageId, deleteFor) => {
+    setContextMenu(null);
+    const msg = messages.find(m => m._id === messageId);
+    if (!msg) return;
+
+    setMessages(prev => prev.map(m =>
+      m._id === messageId
+        ? deleteFor === "everyone"
+          ? { ...m, content: "", image: undefined, deleted: true }
+          : { ...m, _hiddenForMe: true }
+        : m
+    ));
+
+    try {
+      await axios.delete(`${BASE_URL}/messages/${messageId}`, {
+        data: { deleteFor },
+        withCredentials: true,
+      });
+      if (socket && deleteFor === "everyone") {
+        socket.emit("delete-message", { to: friend._id, messageId, deleteFor });
+      }
+      if (deleteFor === "me") {
+        setMessages(prev => prev.filter(m => m._id !== messageId));
+      }
+    } catch (err) {
+      console.error("Delete failed", err);
+      setMessages(prev => prev.map(m =>
+        m._id === messageId ? msg : m
+      ));
+    }
+  };
+
+  // ── React ──────────────────────────────────────────────────
+  const sendReaction = async (messageId, emoji) => {
+    setReactionPicker(null);
+    setMessages(prev => prev.map(m => {
+      if (m._id !== messageId) return m;
+      const reactions = { ...(m.reactions || {}) };
+      if (reactions[userId] === emoji) {
+        delete reactions[userId];
+      } else {
+        reactions[userId] = emoji;
+      }
+      return { ...m, reactions };
+    }));
+
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/messages/${messageId}/react`,
+        { emoji },
+        { withCredentials: true }
+      );
+      if (socket) {
+        socket.emit("react-message", { to: friend._id, messageId, reactions: res.data.reactions });
+      }
+    } catch (err) {
+      console.error("React failed", err);
+    }
+  };
+
+  // ── Context menu ───────────────────────────────────────────
+  const handleContextMenu = (e, msg) => {
+    e.preventDefault();
+    if (msg._sending || msg.deleted || msg._hiddenForMe) return;
+    setContextMenu({
+      x: Math.min(e.clientX, window.innerWidth - 200),
+      y: Math.min(e.clientY, window.innerHeight - 160),
+      messageId: msg._id,
+      isMine: msg.sender === userId,
+      msg,
+    });
   };
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const close = () => { setContextMenu(null); setReactionPicker(null); };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, []);
+
+  // ── Filtered messages ──────────────────────────────────────
+  const filteredMessages = searchQuery
+    ? messages.filter(m => m.content?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : messages;
 
   return (
     <div className="chatbox-container">
-      <div className={`uu ${sidebarOpen ? "ope" : "clos"}`}>
+      {/* Header */}
+      <div className="chatbox-header">
+        {onBack && (
+          <button className="back-btn-mobile" onClick={onBack}>
+            &#8592;
+          </button>
+        )}
         <img
-          src={friend.image && !friend.image.includes('undefined') ? friend.image : DEFAULT_IMAGE}
+          src={friend.image && !friend.image.includes("undefined") ? friend.image : DEFAULT_IMAGE}
           alt={friend.username}
           onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+          className="chatbox-header-avatar"
         />
-        <h3>{friend.username}</h3>
+        <div className="chatbox-header-info">
+          <h3>{friend.username}</h3>
+          <span className={`chatbox-status ${isTyping ? "typing-status" : ""}`}>
+            {isTyping ? "typing..." : ""}
+          </span>
+        </div>
+        <button
+          className={`chatbox-search-btn ${showSearch ? "active" : ""}`}
+          onClick={() => setShowSearch(s => !s)}
+          title="Search messages"
+        >
+          {showSearch ? <FaTimes /> : <FaSearch />}
+        </button>
       </div>
 
-      <div className="chat-messages">
-        {messages.map((msg, i) => {
-          const decryptedText = decryptText(msg.content || "");
+      {/* Search Bar */}
+      {showSearch && (
+        <div className="chatbox-search-bar">
+          <FaSearch />
+          <input
+            type="text"
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            autoFocus
+          />
+          {searchQuery && (
+            <span className="search-count">
+              {filteredMessages.length} result{filteredMessages.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Messages */}
+      <div
+        className="chat-messages"
+        ref={containerRef}
+        onScroll={handleScroll}
+      >
+        {loadingOlder && (
+          <div className="loading-older">Loading older messages...</div>
+        )}
+        {hasMore && !loadingOlder && (
+          <div className="load-older-btn-wrap">
+            <button className="load-older-btn" onClick={loadOlderMessages}>
+              <MdOutlineKeyboardArrowDown /> Load older messages
+            </button>
+          </div>
+        )}
+
+        {filteredMessages.filter(m => !m._hiddenForMe).map((msg, i) => {
+          const isMine = msg.sender === userId;
+          const decrypted = msg.content || "";
+          const showDivider = !searchQuery && shouldShowDivider(filteredMessages, i);
+          const reactions = msg.reactions || {};
+          const reactionGroups = {};
+          Object.values(reactions).forEach(e => {
+            reactionGroups[e] = (reactionGroups[e] || 0) + 1;
+          });
+
           return (
-            <div
-              key={i}
-              className={msg.sender === userId ? "messa outgoing" : "messa incoming"}
-            >
-              <p className={msg.sender === userId ? "out" : "in"}>
-                {msg.image && (
+            <div key={msg._id || i}>
+              {showDivider && (
+                <div className="date-divider">
+                  <span>{formatDateDivider(msg.timestamp)}</span>
+                </div>
+              )}
+
+              <div
+                className={`message-row ${isMine ? "outgoing" : "incoming"}`}
+                onContextMenu={(e) => handleContextMenu(e, msg)}
+              >
+                {!isMine && (
                   <img
-                    src={msg.image}
-                    className="im"
-                    alt="sent"
-                    style={{ maxWidth: "200px", marginTop: "10px", borderRadius: "10px" }}
+                    src={friend.image && !friend.image.includes("undefined") ? friend.image : DEFAULT_IMAGE}
+                    alt=""
+                    className="msg-avatar"
+                    onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
                   />
                 )}
-                {msg.image && <br />}
-                {decryptedText}
-              </p>
+
+                <div className="message-bubble-wrap">
+                  {/* Reply context */}
+                  {msg.replyTo && (
+                    <div className="reply-preview-bubble">
+                      <span className="reply-preview-text">
+                        {msg.replyTo.image ? "📷 Photo" : (msg.replyTo.content || "").slice(0, 60)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className={`message-bubble ${isMine ? "bubble-out" : "bubble-in"} ${msg.deleted ? "deleted-msg" : ""} ${msg._failed ? "failed-msg" : ""} ${msg._sending ? "sending-msg" : ""}`}>
+                    {msg.deleted ? (
+                      <em className="deleted-label">🚫 Message deleted</em>
+                    ) : (
+                      <>
+                        {msg.image && (
+                          <img src={msg.image} className="msg-image" alt="sent" />
+                        )}
+                        {decrypted && <p>{decrypted}</p>}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Reactions */}
+                  {Object.keys(reactionGroups).length > 0 && (
+                    <div className={`reactions-row ${isMine ? "reactions-out" : "reactions-in"}`}>
+                      {Object.entries(reactionGroups).map(([emoji, count]) => (
+                        <span
+                          key={emoji}
+                          className={`reaction-chip ${reactions[userId] === emoji ? "my-reaction" : ""}`}
+                          onClick={() => sendReaction(msg._id, emoji)}
+                          title={`${count} reaction${count > 1 ? "s" : ""}`}
+                        >
+                          {emoji} {count > 1 ? count : ""}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="message-meta">
+                    <span className="msg-time">{formatMessageTime(msg.timestamp)}</span>
+                    {isMine && !msg.deleted && (
+                      <span className={`read-tick ${msg.read ? "read" : ""}`}>
+                        {msg.read ? <FaCheckDouble /> : <FaCheck />}
+                      </span>
+                    )}
+                    {msg._failed && <span className="fail-label">⚠️ Failed</span>}
+                  </div>
+                </div>
+
+                {/* Hover Actions */}
+                {!msg.deleted && !msg._sending && (
+                  <div className={`msg-hover-actions ${isMine ? "actions-out" : "actions-in"}`}>
+                    <button onClick={() => setReplyTo(msg)} title="Reply"><FaReply /></button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setReactionPicker(msg._id); }}
+                      title="React"
+                    >
+                      <FaSmile />
+                    </button>
+                    {isMine && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleContextMenu(e, msg); }}
+                        title="Delete"
+                      >
+                        <FaTrash />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick reaction picker */}
+                {reactionPicker === msg._id && (
+                  <div
+                    className={`quick-reactions ${isMine ? "qr-out" : "qr-in"}`}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {QUICK_REACTIONS.map(emoji => (
+                      <button key={emoji} onClick={() => sendReaction(msg._id, emoji)}>
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
-        <div ref={scrollRef}></div>
+
+        {isTyping && (
+          <div className="message-row incoming">
+            <img
+              src={friend.image && !friend.image.includes("undefined") ? friend.image : DEFAULT_IMAGE}
+              alt=""
+              className="msg-avatar"
+              onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+            />
+            <div className="typing-bubble">
+              <span /><span /><span />
+            </div>
+          </div>
+        )}
+        <div ref={scrollRef} />
       </div>
 
-      <div className="chat-input">
-        <input
-          value={text}
-          className="inpu"
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Type your message..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              sendMessage();
-            }
+      {/* Scroll to bottom fab */}
+      {!scrollAtBottom && (
+        <button
+          className="scroll-to-bottom"
+          onClick={() => {
+            setScrollAtBottom(true);
+            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
           }}
-        />
+        >
+          ↓
+        </button>
+      )}
 
-        <label htmlFor="sendimage">
-          <FaImages className="send" />
+      {/* Reply Bar */}
+      {replyTo && (
+        <div className="reply-bar">
+          <div className="reply-bar-content">
+            <FaReply className="reply-bar-icon" />
+            <span>{replyTo.image ? "📷 Photo" : (replyTo.content || "").slice(0, 60)}</span>
+          </div>
+          <button onClick={() => setReplyTo(null)}><FaTimes /></button>
+        </div>
+      )}
+
+      {/* Image preview */}
+      {image && (
+        <div className="image-preview-bar">
+          <img src={image} alt="preview" />
+          <button onClick={() => setImage(null)}><FaTimes /></button>
+        </div>
+      )}
+
+      {/* Input */}
+      <div className="chat-input-bar">
+        <label htmlFor="sendimage" className="input-icon-btn" title="Send image">
+          <FaImages />
         </label>
         <input
           type="file"
@@ -159,27 +613,62 @@ export const ChatBox = ({ friend, sidebarOpen }) => {
           style={{ display: "none" }}
         />
 
-        <FaSmile className="smile" onClick={() => setShowEmojiPicker((prev) => !prev)} />
+        <button
+          className="input-icon-btn"
+          onClick={() => setShowEmojiPicker(p => !p)}
+          title="Emoji"
+        >
+          <FaSmile />
+        </button>
 
         {showEmojiPicker && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "80px",
-              right: "20px",
-              zIndex: 1000,
-            }}
-          >
+          <div className="emoji-picker-wrap">
             <Picker
               data={data}
-              onEmojiSelect={(emoji) => setText((prev) => prev + emoji.native)}
+              onEmojiSelect={(emoji) => { setText(p => p + emoji.native); setShowEmojiPicker(false); }}
               theme="dark"
             />
           </div>
         )}
 
-        <IoSend className="send" onClick={sendMessage} />
+        <input
+          value={text}
+          className="chat-text-input"
+          onChange={handleTyping}
+          placeholder="Type a message..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage();
+            }
+          }}
+        />
+
+        <button className="send-btn" onClick={sendMessage} disabled={!text.trim() && !image}>
+          <IoSend />
+        </button>
       </div>
+
+      {/* Context menu */}
+      {contextMenu && (
+        <div
+          className="context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={e => e.stopPropagation()}
+        >
+          <button onClick={() => { setReplyTo(contextMenu.msg); setContextMenu(null); }}>
+            <FaReply /> Reply
+          </button>
+          <button onClick={() => deleteMessage(contextMenu.messageId, "me")}>
+            <FaTrash /> Delete for me
+          </button>
+          {contextMenu.isMine && (
+            <button className="danger" onClick={() => deleteMessage(contextMenu.messageId, "everyone")}>
+              <FaTrash /> Delete for everyone
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

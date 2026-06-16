@@ -1,55 +1,165 @@
 import { useEffect, useState } from "react";
 import "./insta.css";
-import { FaPlusSquare, FaTrash, FaEdit, FaCheck, FaHeart, FaRegHeart, FaUserAlt, FaUsers } from "react-icons/fa";
-import { MdPermMedia } from "react-icons/md";
+import { FaHeart, FaRegHeart, FaRegComment, FaEdit, FaTrash, FaCheck, FaImage, FaVideo, FaFlag } from "react-icons/fa";
+
 import {
   addpost,
   getmypost,
   deletepost,
   editpost,
-  getallpost,
   likeorunlikepost,
   commentonpost
 } from "../api/api";
-import { FaCommentMedical } from "react-icons/fa";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
-import { Spinner } from "../Spinner";
-import { FaRegComment } from "react-icons/fa";
+import { Skeleton } from "../components/Skeleton";
+import axios from "axios";
 
 const CLOUDINARY_UPLOAD_PRESET = "unsigned_preset";
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 
+const PostCard = ({ 
+  post, 
+  isMine, 
+  currentUserId,
+  handlelike, 
+  toggleComments, 
+  handleDelete,
+  editingId, 
+  setEditingId, 
+  editCaption, 
+  setEditCaption, 
+  handleEdit,
+  showComments,
+  commentInputs,
+  setCommentInputs,
+  handleComment,
+  handleReport
+}) => (
+  <div className="feed-card animate-in">
+    <div className="feed-header">
+      <img
+        src={post.user?.image && !post.user.image.includes('undefined') ? post.user.image : DEFAULT_IMAGE}
+        alt="user"
+        onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+        className="feed-avatar"
+      />
+      <span className="feed-username">{post.user?.username || "Anonymous"}</span>
+      {isMine && (
+        <div className="feed-actions">
+          <button onClick={() => { setEditingId(post._id); setEditCaption(post.caption); }}><FaEdit /></button>
+          <button onClick={() => handleDelete(post._id)} className="delete-btn"><FaTrash /></button>
+        </div>
+      )}
+    </div>
+
+    <div className="feed-media">
+      {post.image.includes(".mp4") ? (
+        <video src={post.image} controls />
+      ) : (
+        <img src={post.image} alt="post" />
+      )}
+    </div>
+
+    <div className="feed-footer">
+      <div className="interaction-bar">
+        <button className={`like-btn ${post.likes.includes(currentUserId) ? 'liked' : ''}`} onClick={() => handlelike(post._id)}>
+          {post.likes.includes(currentUserId) ? <FaHeart /> : <FaRegHeart />}
+        </button>
+        <button className="comment-btn" onClick={() => toggleComments(post._id)}>
+          <FaRegComment />
+        </button>
+        {!isMine && (
+          <button 
+            className="report-btn"
+            onClick={() => handleReport(post._id)} 
+            title="Report Post"
+            style={{ marginLeft: 'auto', color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            <FaFlag />
+          </button>
+        )}
+      </div>
+
+      <p className="likes-count">{post.likes?.length || 0} likes</p>
+
+      {editingId === post._id ? (
+        <div className="edit-caption-box">
+          <textarea value={editCaption} onChange={(e) => setEditCaption(e.target.value)} />
+          <button onClick={() => handleEdit(post._id)} className="save-btn"><FaCheck /> Save</button>
+        </div>
+      ) : (
+        <p className="post-caption">
+          <span className="caption-username">{post.user?.username}</span> {post.caption}
+        </p>
+      )}
+
+      <div className="comment-section">
+        {post.comments?.length > 0 && (
+          <p className="view-comments" onClick={() => toggleComments(post._id)}>
+            {showComments[post._id] ? "Hide comments" : `View all ${post.comments.length} comments`}
+          </p>
+        )}
+
+        {showComments[post._id] && (
+          <div className="comments-list">
+            {post.comments.map((c, i) => (
+              <div key={i} className="comment-item">
+                <strong>{c.user?.username}</strong> {c.text}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form className="comment-input-form" onSubmit={(e) => handleComment(post._id, e)}>
+          <input
+            type="text"
+            placeholder="Add a comment..."
+            value={commentInputs[post._id] || ""}
+            onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
+          />
+          <button type="submit" disabled={!commentInputs[post._id]?.trim()}>Post</button>
+        </form>
+      </div>
+    </div>
+  </div>
+);
+
 export const Insta = () => {
-  const [activeMenu, setActiveMenu] = useState("all");
+  const [activeTab, setActiveTab] = useState("feed");
   const [image, setimage] = useState(null);
   const [caption, setcaption] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingUpload, setLoadingUpload] = useState(false);
   const [myposts, setMyposts] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editCaption, setEditCaption] = useState("");
   const [commentInputs, setCommentInputs] = useState({});
   const [showComments, setShowComments] = useState({});
   const [loadingMyPost, setLoadingMyPost] = useState(false);
-  const [loadingAllPost, setLoadingAllPost] = useState(false);
+
+  const [reportedPosts, setReportedPosts] = useState({});
+
+  const handleReport = async (id) => {
+    if (reportedPosts[id]) return;
+    setReportedPosts(prev => ({ ...prev, [id]: true }));
+    try {
+      await axios.post(`${BASE_URL}/insta/post/${id}/report`, {}, { withCredentials: true });
+    } catch (err) {
+      console.error("Report failed", err);
+      setReportedPosts(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   const { ref, inView } = useInView();
+
   const queryClient = useQueryClient();
+  const currentUserId = localStorage.getItem("userId");
 
   const fetchPostsPage = async ({ pageParam = 1 }) => {
-    try {
-      setLoadingAllPost(true);
-      const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, {
-        credentials: "include",
-      });
-      return await res.json();
-    } catch (err) {
-      console.error("Error fetching all posts:", err);
-      throw err;
-    } finally {
-      setLoadingAllPost(false);
-    }
+    const res = await fetch(`${BASE_URL}/insta/posts?page=${pageParam}`, { credentials: "include" });
+    if (!res.ok) throw new Error("Network response was not ok");
+    return await res.json();
   };
 
   const {
@@ -57,22 +167,20 @@ export const Insta = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isLoading: isLoadingAll
   } = useInfiniteQuery({
     queryKey: ["all-posts"],
     queryFn: fetchPostsPage,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length === 10 ? allPages.length + 1 : undefined,
+    getNextPageParam: (lastPage, allPages) => lastPage.length === 10 ? allPages.length + 1 : undefined,
   });
 
   useEffect(() => {
-    if (inView && hasNextPage) {
-      fetchNextPage();
-    }
+    if (inView && hasNextPage) fetchNextPage();
   }, [inView, hasNextPage, fetchNextPage]);
 
-  const toggleComments = (postId) => {
-    setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
-  };
+  useEffect(() => {
+    if (activeTab === "my") fetchMyPosts();
+  }, [activeTab]);
 
   const fetchMyPosts = async () => {
     try {
@@ -88,7 +196,7 @@ export const Insta = () => {
 
   const handleaddpost = async () => {
     if (!image || !caption.trim()) return;
-    setLoading(true);
+    setLoadingUpload(true);
     try {
       const formData = new FormData();
       formData.append("file", image);
@@ -99,18 +207,18 @@ export const Insta = () => {
         : "https://api.cloudinary.com/v1_1/dwzvlijky/image/upload";
 
       const res = await fetch(uploadUrl, { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
+      const uploadData = await res.json();
+      if (uploadData.error) throw new Error(uploadData.error.message);
 
-      await addpost({ caption, image: data.secure_url });
+      await addpost({ caption, image: uploadData.secure_url });
       setcaption("");
       setimage(null);
-      setActiveMenu("all");
+      setActiveTab("my");
       queryClient.invalidateQueries(["all-posts"]);
     } catch (err) {
       console.error("Error adding post:", err);
     } finally {
-      setLoading(false);
+      setLoadingUpload(false);
     }
   };
 
@@ -118,6 +226,7 @@ export const Insta = () => {
     try {
       await deletepost(id);
       setMyposts((prev) => prev.filter((post) => post._id !== id));
+      queryClient.invalidateQueries(["all-posts"]);
     } catch (err) {
       console.error(err);
     }
@@ -131,156 +240,176 @@ export const Insta = () => {
       setEditingId(null);
       setEditCaption("");
       fetchMyPosts();
+      queryClient.invalidateQueries(["all-posts"]);
     } catch (err) {
       console.error(err);
     }
   };
 
   const handlelike = async (id) => {
+    // Optimistic Update for React Query (Feed)
+    await queryClient.cancelQueries(["all-posts"]);
+    const previousPosts = queryClient.getQueryData(["all-posts"]);
+    queryClient.setQueryData(["all-posts"], (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map(page => 
+          page.map(post => {
+            if (post._id === id) {
+              const isLiked = post.likes.includes(currentUserId);
+              return {
+                ...post,
+                likes: isLiked ? post.likes.filter(uid => uid !== currentUserId) : [...post.likes, currentUserId]
+              };
+            }
+            return post;
+          })
+        )
+      };
+    });
+
+    // Optimistic Update for My Posts state
+    setMyposts(prev => prev.map(post => {
+      if (post._id === id) {
+        const isLiked = post.likes.includes(currentUserId);
+        return {
+          ...post,
+          likes: isLiked ? post.likes.filter(uid => uid !== currentUserId) : [...post.likes, currentUserId]
+        };
+      }
+      return post;
+    }));
+
     try {
       await likeorunlikepost(id);
-      queryClient.invalidateQueries(["all-posts"]);
     } catch (err) {
+      queryClient.setQueryData(["all-posts"], previousPosts);
+      fetchMyPosts();
       console.error(err);
     }
   };
 
-  const handleComment = async (id) => {
+  const handleComment = async (id, e) => {
+    e.preventDefault();
     const text = commentInputs[id]?.trim();
     if (!text) return;
+    
+    // Optimistic Update for Comments
+    const newComment = { text, user: { _id: currentUserId, username: "Me" } }; // We can't know our own image synchronously unless stored in localstorage, but "Me" is fine.
+
+    await queryClient.cancelQueries(["all-posts"]);
+    const previousPosts = queryClient.getQueryData(["all-posts"]);
+
+    queryClient.setQueryData(["all-posts"], (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map(page => page.map(post => {
+          if (post._id === id) return { ...post, comments: [...post.comments, newComment] };
+          return post;
+        }))
+      };
+    });
+
+    setMyposts(prev => prev.map(post => {
+      if (post._id === id) return { ...post, comments: [...post.comments, newComment] };
+      return post;
+    }));
+
+    setCommentInputs(prev => ({ ...prev, [id]: "" }));
+    setShowComments(prev => ({ ...prev, [id]: true }));
+
     try {
       await commentonpost({ id, text });
-      setCommentInputs((prev) => ({ ...prev, [id]: "" }));
-      queryClient.invalidateQueries(["all-posts"]);
     } catch (err) {
+      queryClient.setQueryData(["all-posts"], previousPosts);
       console.error(err);
     }
   };
 
-  const PostCard = ({ post, isMine }) => (
-    <div className="postcard animate-in">
-      <div className="postcard-header">
-        <img
-          src={post.user?.image && !post.user.image.includes('undefined') ? post.user.image : DEFAULT_IMAGE}
-          alt="user"
-          onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
-        />
-        <span>{post.user?.username || "Anonymous"}</span>
-      </div>
+  const toggleComments = (postId) => {
+    setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  };
 
-      {post.image.includes(".mp4") ? (
-        <video src={post.image} controls />
-      ) : (
-        <img src={post.image} alt="post content" />
-      )}
+  const postCardProps = {
+    currentUserId,
+    handlelike,
+    toggleComments,
+    handleDelete,
+    editingId,
+    setEditingId,
+    editCaption,
+    setEditCaption,
+    handleEdit,
+    showComments,
+    commentInputs,
+    setCommentInputs,
+    handleComment,
+    handleReport
+  };
 
-      <div className="postcard-footer">
-        <div className="action-bar">
-          {post.likes.includes(localStorage.getItem("userId")) ? (
-            <FaHeart onClick={() => handlelike(post._id)} className="like" />
-          ) : (
-            <FaRegHeart onClick={() => handlelike(post._id)} className="ll" />
-          )}
-          <FaRegComment onClick={() => toggleComments(post._id)} className="ll" />
+  const renderSkeletons = () => (
+    Array(3).fill(0).map((_, i) => (
+      <div key={i} className="feed-card skeleton-card">
+        <div className="feed-header">
+          <Skeleton width="40px" height="40px" borderRadius="50%" />
+          <Skeleton width="120px" height="16px" />
         </div>
-
-        <p className="likes-count">{post.likes?.length || 0} likes</p>
-
-        {editingId === post._id ? (
-          <div className="edit-area">
-            <textarea value={editCaption} onChange={(e) => setEditCaption(e.target.value)} />
-            <FaCheck onClick={() => handleEdit(post._id)} className="icon confirm" />
-          </div>
-        ) : (
-          <p className="caption"><strong>{post.user?.username}</strong> {post.caption}</p>
-        )}
-
-        {isMine && (
-          <div className="mine-actions">
-            <FaEdit onClick={() => { setEditingId(post._id); setEditCaption(post.caption); }} />
-            <FaTrash onClick={() => handleDelete(post._id)} />
-          </div>
-        )}
-
-        <div className="comment-section">
-          <div className="comment-toggle" onClick={() => toggleComments(post._id)}>
-            {post.comments?.length > 0 ? `View all ${post.comments.length} comments` : "No comments yet"}
-          </div>
-
-          {showComments[post._id] && (
-            <div className="comments-list">
-              {post.comments.map((c, i) => (
-                <div key={i} className="comment-item">
-                  <img
-                    src={c.user?.image && !c.user.image.includes('undefined') ? c.user.image : DEFAULT_IMAGE}
-                    alt="user"
-                    onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
-                  />
-                  <p><strong>{c.user?.username}:</strong> {c.text}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="comment-input-group">
-            <input
-              type="text"
-              placeholder="Add a comment..."
-              value={commentInputs[post._id] || ""}
-              onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
-            />
-            <FaCommentMedical onClick={() => handleComment(post._id)} className="add-comment-btn" />
-          </div>
+        <Skeleton width="100%" height="400px" borderRadius="0" />
+        <div className="feed-footer">
+          <Skeleton width="80px" height="20px" style={{ marginBottom: "10px" }}/>
+          <Skeleton width="60%" height="14px" />
         </div>
       </div>
-    </div>
+    ))
   );
 
   return (
-    <>
-      {(loadingMyPost || loadingAllPost || loading) && <Spinner />}
-      <div className="insta-page">
-        <div className="semicircle-menu">
-          <FaPlusSquare title="Create" onClick={() => setActiveMenu("add")} className="menu-icon" />
-          <FaUsers title="Feed" onClick={() => setActiveMenu("all")} className="menu-icon" />
-          <FaUserAlt title="My Posts" onClick={() => { setActiveMenu("my"); fetchMyPosts(); }} className="menu-icon" />
+    <div className="discover-container">
+      <div className="feed-tabs">
+        <button className={activeTab === "feed" ? "active" : ""} onClick={() => setActiveTab("feed")}>Global Feed</button>
+        <button className={activeTab === "my" ? "active" : ""} onClick={() => setActiveTab("my")}>My Posts</button>
+      </div>
+
+      <div className="feed-content">
+        {/* Create Post Section */}
+        <div className="create-post-card glass-card animate-in">
+          <textarea 
+            placeholder="Share something awesome..." 
+            value={caption} 
+            onChange={(e) => setcaption(e.target.value)} 
+          />
+          <div className="create-post-actions">
+            <label htmlFor="media-upload" className="upload-btn">
+              {image ? (image.type.startsWith("video") ? <FaVideo /> : <FaImage />) : <FaImage />}
+              <span>{image ? image.name : "Add Media"}</span>
+            </label>
+            <input type="file" accept="image/*,video/*" id="media-upload" hidden onChange={(e) => setimage(e.target.files[0])} />
+            
+            <button className="post-btn" onClick={handleaddpost} disabled={loadingUpload || !image || !caption.trim()}>
+              {loadingUpload ? "Posting..." : "Post"}
+            </button>
+          </div>
         </div>
 
-        <div className="largecontainer">
-          {activeMenu === "add" && (
-            <div className="inputarea animate-in">
-              <h2>Create New Post</h2>
-              <input type="text" placeholder="What's on your mind?" value={caption} onChange={(e) => setcaption(e.target.value)} />
-              <label htmlFor="upload" className="upload-label">
-                <MdPermMedia className="imgg" />
-                <span>{image ? image.name : "Select Media"}</span>
-              </label>
-              <input type="file" accept="image/*,video/*" id="upload" style={{ display: "none" }} onChange={(e) => setimage(e.target.files[0])} />
-              <button className="addd" onClick={handleaddpost} disabled={loading}>
-                {loading ? "Posting..." : "Post Now"}
-              </button>
-            </div>
-          )}
-
-          {activeMenu === "my" && (
-            <div className="viewarea">
-              <h1>My Posts</h1>
-              {myposts.map(post => <PostCard key={post._id} post={post} isMine={true} />)}
-            </div>
-          )}
-
-          {activeMenu === "all" && (
-            <div className="showarea">
-              <h1>Feed</h1>
-              <div className="feed-grid">
-                {data?.pages.flat().map(post => <PostCard key={post._id} post={post} isMine={false} />)}
-              </div>
-              {isFetchingNextPage && <p className="loading-more">Loading more...</p>}
+        {/* Feed List */}
+        <div className="feed-list">
+          {activeTab === "feed" && (
+            <>
+              {isLoadingAll ? renderSkeletons() : data?.pages.flat().map(post => <PostCard key={post._id} post={post} isMine={false} {...postCardProps} />)}
+              {isFetchingNextPage && renderSkeletons()}
               <div ref={ref} />
-            </div>
+            </>
+          )}
+          
+          {activeTab === "my" && (
+            <>
+              {loadingMyPost ? renderSkeletons() : myposts.length === 0 ? <p className="empty-state-text">You haven't posted anything yet.</p> : myposts.map(post => <PostCard key={post._id} post={post} isMine={true} {...postCardProps} />)}
+            </>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };

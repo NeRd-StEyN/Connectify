@@ -1,10 +1,8 @@
 const mongoose = require("mongoose");
 
-mongoose.connect(
-  `mongodb+srv://Nipun:${process.env.PASSWORD}@connectify.nstwyzk.mongodb.net/connectify?retryWrites=true&w=majority&appName=Connectify`,
-  {
+const dbURI = process.env.MONGODB_URI || `mongodb+srv://Nipun:${process.env.PASSWORD}@connectify.nstwyzk.mongodb.net/connectify?retryWrites=true&w=majority&appName=Connectify`;
 
-  }
-)
-.then(() => console.log("✅ MongoDB connected via Mongoose"))
-.catch((err) => console.error("❌ MongoDB connection error:", err));
+mongoose.connect(dbURI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
+

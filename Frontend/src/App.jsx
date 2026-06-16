@@ -1,39 +1,42 @@
-import { createBrowserRouter,Navigate, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { Home } from "./pages/Home";
 import { Layout } from "./Layout/Layout";
 import { Insta } from "./pages/Insta";
 import { Myself } from "./pages/Myself";
 import { Chat } from "./pages/Chat";
 import { Search } from "./pages/Search";
-import {ProtectedRoute} from "./ProtectedRoute";
+import { Settings } from "./pages/Settings";
+import { ProtectedRoute } from "./ProtectedRoute";
+
 const router = createBrowserRouter([
   {
-    path: "/", // Public Home
+    path: "/",
     element: <Home />,
   },
   {
-    path: "/", // All protected routes go under /app/*
+    path: "/",
     element: (
       <ProtectedRoute>
         <Layout />
       </ProtectedRoute>
     ),
     children: [
-       
       { path: "search", element: <Search /> },
       { path: "chat", element: <Chat /> },
       { path: "insta", element: <Insta /> },
       { path: "myself", element: <Myself /> },
+      { path: "settings", element: <Settings /> },
 
-      // Catch invalid sub-routes under /app/*
+      // Catch invalid sub-routes
       { path: "search/*", element: <Navigate to="/search" replace /> },
       { path: "chat/*", element: <Navigate to="/chat" replace /> },
       { path: "insta/*", element: <Navigate to="/insta" replace /> },
       { path: "myself/*", element: <Navigate to="/myself" replace /> },
+      { path: "settings/*", element: <Navigate to="/settings" replace /> },
     ],
   },
   {
-    path: "*", // Catch all unknown routes
+    path: "*",
     element: <Navigate to="/" replace />,
   },
 ]);

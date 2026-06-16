@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Database Service
+  mongodb:
+    image: mongo:latest
+    container_name: connectify-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+
+  # Backend Service
+  backend:
+    build: ./Backend
+    container_name: connectify-backend
+    ports:
+      - "9000:9000"
+    environment:
+      - PORT=9000
+      - MONGODB_URI=mongodb://mongodb:27017/connectify
+      # Add other environment variables from your Backend/.env here if needed
+    depends_on:
+      - mongodb
+    restart: always
+
+  # Frontend Service
+  frontend:
+    build: ./Frontend
+    container_name: connectify-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:9000
+    depends_on:
+      - backend
+    restart: always
+
+  # 4. Database Viewer (Visualizing your data)
+  mongo-viewer:
+    image: mongo-express:latest
+    container_name: connectify-viewer
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+    depends_on:
+      - mongodb
+    restart: always
+
+volumes:
+  mongo-data:

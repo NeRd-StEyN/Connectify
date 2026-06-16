@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { Spinner } from "../Spinner";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
-import { FaCamera, FaTimes, FaCheck, FaSave } from "react-icons/fa";
+import { FaCamera, FaTimes, FaCheck, FaSave, FaUserFriends, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
 import { friends, pendingrequest, acceptFriendRequest, rejectFriendRequest } from "../api/api";
-import { IoLogOut } from "react-icons/io5";
+import { Skeleton, SkeletonCircle } from "../components/Skeleton";
 import "./Myself.css";
 
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
@@ -14,105 +13,72 @@ const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 export const Myself = () => {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [loadingCrop, setLoadingCrop] = useState(false);
-  const [loadingSave, setLoadingSave] = useState(false);
-  const [loadingFriends, setLoadingFriends] = useState(false);
-  const [loadingPending, setLoadingPending] = useState(false);
-  const [loadingLogout, setLoadingLogout] = useState(false);
-
+  const [loadingAction, setLoadingAction] = useState(false);
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState("");
-  const [message, setMessage] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [message, setMessage] = useState({ text: "", type: "" });
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(2);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
 
-  const [pending, setpending] = useState([]);
-  const [showfriends, setshowfriends] = useState([]);
-
-  const [showPending, setShowPending] = useState(false);
-  const [showFriends, setShowFriends] = useState(false);
-
-  const togglePending = () => {
-    setShowPending(prev => !prev);
-    setShowFriends(false);
-  };
-
-  const toggleFriends = () => {
-    setShowFriends(prev => !prev);
-    setShowPending(false);
-  };
+  const [pending, setPending] = useState([]);
+  const [showfriends, setShowFriends] = useState([]);
+  const [activeTab, setActiveTab] = useState("friends");
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
         setLoadingUser(true);
-        const res = await axios.get(`${BASE_URL}/get-user`, {
-          withCredentials: true,
-        });
-        setUser(res.data);
-        setDesc(res.data.description || "");
-        setImage(res.data.image || DEFAULT_IMAGE);
+        const [userRes, pendingRes, friendsRes] = await Promise.all([
+          axios.get(`${BASE_URL}/get-user`, { withCredentials: true }),
+          pendingrequest(),
+          friends()
+        ]);
+        setUser(userRes.data);
+        setDesc(userRes.data.description || "");
+        setImage(userRes.data.image || DEFAULT_IMAGE);
+        setPending(pendingRes || []);
+        setShowFriends(friendsRes || []);
       } catch (err) {
-        console.error("Failed to load user", err);
+        console.error("Failed to load profile data", err);
+        showMessage("Failed to load profile data", "error");
       } finally {
         setLoadingUser(false);
       }
     };
-    fetchUser();
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setPreviewUrl(null);
+  }, [selectedFile]);
+
+  const showMessage = (text, type = "success") => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: "", type: "" }), 3000);
+  };
 
   const handleSave = async () => {
     try {
-      setLoadingSave(true);
-      await axios.post(
-        `${BASE_URL}/edituser`,
-        { d: desc, n: user.username },
-        { withCredentials: true }
-      );
-      setMessage("Profile updated!");
-      setTimeout(() => setMessage(""), 2000);
+      setLoadingAction(true);
+      await axios.post(`${BASE_URL}/edituser`, { d: desc, n: user.username }, { withCredentials: true });
+      showMessage("Profile updated successfully");
     } catch (err) {
       console.error("Update failed", err);
-      setMessage("Update failed.");
+      showMessage("Failed to update profile", "error");
     } finally {
-      setLoadingSave(false);
+      setLoadingAction(false);
     }
   };
-
-  useEffect(() => {
-    const fetchPending = async () => {
-      try {
-        setLoadingPending(true);
-        const res = await pendingrequest();
-        setpending(res);
-      } catch (err) {
-        console.log("Error fetching pending requests:", err);
-      } finally {
-        setLoadingPending(false);
-      }
-    };
-    fetchPending();
-  }, []);
-
-  useEffect(() => {
-    const fetchFriends = async () => {
-      try {
-        setLoadingFriends(true);
-        const res = await friends();
-        setshowfriends(res);
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setLoadingFriends(false);
-      }
-    };
-    fetchFriends();
-  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -129,140 +95,144 @@ export const Myself = () => {
 
   const handleCropDone = async () => {
     try {
-      setLoadingCrop(true);
-      const base64Image = await getCroppedImg(
-        URL.createObjectURL(selectedFile),
-        croppedAreaPixels
-      );
+      setLoadingAction(true);
+      const base64Image = await getCroppedImg(previewUrl, croppedAreaPixels);
       setImage(base64Image);
       setShowCropper(false);
 
-      await axios.post(
-        `${BASE_URL}/upload-image`,
-        { image: base64Image },
-        { withCredentials: true }
-      );
-
-      setMessage("Image updated!");
-      setTimeout(() => setMessage(""), 2000);
+      await axios.post(`${BASE_URL}/upload-image`, { image: base64Image }, { withCredentials: true });
+      showMessage("Profile picture updated");
     } catch (err) {
-      console.error("Crop/upload failed", err);
-      setMessage("Crop failed");
+      console.error("Upload failed", err);
+      showMessage("Failed to update picture", "error");
     } finally {
-      setLoadingCrop(false);
+      setLoadingAction(false);
     }
   };
 
   const handleAccept = async (requestId) => {
+    // Optimistic Update
+    const acceptedReq = pending.find(r => r._id === requestId);
+    setPending(prev => prev.filter(r => r._id !== requestId));
+    if(acceptedReq) setShowFriends(prev => [...prev, acceptedReq]);
+    
     try {
       await acceptFriendRequest(requestId);
-      setpending(prev => prev.filter(r => r._id !== requestId));
+      showMessage("Friend request accepted");
     } catch (err) {
-      console.error("Failed to accept request", err);
+      // Revert on failure
+      if(acceptedReq) {
+        setPending(prev => [...prev, acceptedReq]);
+        setShowFriends(prev => prev.filter(f => f._id !== acceptedReq._id));
+      }
+      console.error("Failed to accept", err);
+      showMessage("Failed to accept", "error");
     }
   };
 
   const handleReject = async (requestId) => {
+    const rejectedReq = pending.find(r => r._id === requestId);
+    setPending(prev => prev.filter(r => r._id !== requestId));
+    
     try {
       await rejectFriendRequest(requestId);
-      setpending(prev => prev.filter(r => r._id !== requestId));
     } catch (err) {
-      console.error("Failed to reject request", err);
+      if(rejectedReq) setPending(prev => [...prev, rejectedReq]);
+      console.error("Failed to reject", err);
     }
   };
 
   const handleUnfriend = async (requestId) => {
+    const removedFriend = showfriends.find(f => f._id === requestId);
+    setShowFriends(prev => prev.filter(f => f._id !== requestId));
+    
     try {
-      await axios.post(
-        `${BASE_URL}/friends/remove`,
-        { requestId },
-        { withCredentials: true }
-      );
-      setshowfriends(prev => prev.filter(f => f._id !== requestId));
+      await axios.post(`${BASE_URL}/friends/remove`, { requestId }, { withCredentials: true });
+      showMessage("Friend removed");
     } catch (err) {
+      if(removedFriend) setShowFriends(prev => [...prev, removedFriend]);
       console.error("Failed to unfriend", err);
+      showMessage("Failed to remove friend", "error");
     }
   };
 
   const handleLogoutAll = async () => {
-    setLoadingLogout(true);
+    setLoadingAction(true);
     try {
       await axios.post(`${BASE_URL}/logout-all`, {}, { withCredentials: true });
       localStorage.clear();
       window.location.href = "/";
     } catch (err) {
       console.error("Logout failed", err);
-    } finally {
-      setLoadingLogout(false);
+      setLoadingAction(false);
     }
   };
 
-  if (!user && loadingUser) return <Spinner />;
-  if (!user) return null;
+  if (loadingUser) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header skeleton-card">
+          <SkeletonCircle size="120px" />
+          <Skeleton width="200px" height="30px" style={{ marginTop: "20px" }} />
+          <Skeleton width="300px" height="60px" style={{ marginTop: "15px" }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="m">
-      {(loadingUser || loadingCrop || loadingSave || loadingFriends || loadingPending || loadingLogout) && <Spinner />}
-      <div className="myself-container animate-in">
-        <div className="logout-dropdown">
-          <button
-            className="logout-btn"
-            onClick={() => setDropdownOpen((prev) => !prev)}
-            title="Logout"
-          >
-            <IoLogOut />
-          </button>
-          {dropdownOpen && (
-            <div className="dropdown-menu">
-              <p onClick={handleLogoutAll}>Logout</p>
-            </div>
-          )}
+    <div className="dashboard-container animate-in">
+      {message.text && (
+        <div className={`dashboard-toast ${message.type}`}>
+          {message.text}
         </div>
+      )}
 
-        <div className="profile-header">
-          <div className="profile-pic-wrapper">
-            <img
-              src={image && !image.includes('undefined') ? image : DEFAULT_IMAGE}
-              alt="Profile"
-              className="profile-pic"
-              onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
-            />
-            <label htmlFor="fileInput" className="file-upload-icon">
-              <FaCamera />
-            </label>
-            <input
-              id="fileInput"
-              type="file"
-              onChange={handleFileChange}
-              style={{ display: "none" }}
-            />
-          </div>
-          <div className="profile-info">
-            <h3>{user.username}</h3>
-            <p>{pending.length} pending requests • {showfriends.length} friends</p>
-          </div>
+      <div className="dashboard-header glass-card">
+        <div className="profile-avatar-container">
+          <img
+            src={image && !image.includes('undefined') ? image : DEFAULT_IMAGE}
+            alt="Profile"
+            className="profile-avatar-large"
+            onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+          />
+          <label htmlFor="fileInput" className="avatar-edit-overlay">
+            <FaCamera />
+          </label>
+          <input
+            id="fileInput"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
         </div>
-
-        <div className="desc-section">
-          <label>About Me</label>
+        <h1 className="profile-name">{user?.username}</h1>
+        
+        <div className="profile-bio-editor">
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
-            rows={4}
-            placeholder="Tell the world something about you..."
-            spellCheck={false}
+            placeholder="Tell us about yourself..."
+            rows={3}
           />
+          <button className="btn-primary" onClick={handleSave} disabled={loadingAction}>
+            {loadingAction ? "Saving..." : <><FaSave /> Save Bio</>}
+          </button>
         </div>
 
-        <FaSave onClick={handleSave} className="save-btn" title="Save Changes" />
+        <button className="btn-danger logout-btn-dash" onClick={handleLogoutAll}>
+          <FaSignOutAlt /> Log out
+        </button>
+      </div>
 
-        {message && <p className="messag">{message}</p>}
-
-        {showCropper && (
-          <div className="cropper-modal">
-            <div className="cropper-container">
+      {showCropper && (
+        <div className="cropper-modal-overlay">
+          <div className="cropper-modal-content glass-card">
+            <h3>Adjust Photo</h3>
+            <div className="cropper-wrapper">
               <Cropper
-                image={URL.createObjectURL(selectedFile)}
+                image={previewUrl}
                 crop={crop}
                 zoom={zoom}
                 aspect={1}
@@ -271,8 +241,7 @@ export const Myself = () => {
                 onCropComplete={onCropComplete}
               />
             </div>
-            <div className="cropper-controls">
-              <FaTimes onClick={() => setShowCropper(false)} className="crop-cancel" title="Cancel" />
+            <div className="cropper-actions">
               <input
                 type="range"
                 min={1}
@@ -280,57 +249,82 @@ export const Myself = () => {
                 step={0.1}
                 value={zoom}
                 onChange={(e) => setZoom(e.target.value)}
-                className="zoom-slider"
               />
-              <FaCheck onClick={handleCropDone} className="crop-confirm" title="Confirm" />
+              <div className="cropper-buttons">
+                <button className="btn-secondary" onClick={() => setShowCropper(false)}>Cancel</button>
+                <button className="btn-primary" onClick={handleCropDone} disabled={loadingAction}>
+                  {loadingAction ? "Saving..." : "Save Photo"}
+                </button>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="friends-section">
-          <div className="section-title" onClick={togglePending}>
-            <span>Pending Requests ({pending.length})</span>
-            <span>{showPending ? "↑" : "↓"}</span>
-          </div>
-          {showPending && (
-            <ul>
-              {pending.map((cur) => (
-                <li key={cur._id} className="pending-li">
-                  <p>{cur.sender.username}</p>
-                  <div style={{ display: "flex", gap: "12px" }}>
-                    <FaCheck
-                      onClick={() => handleAccept(cur._id)}
-                      style={{ cursor: "pointer", color: "var(--success)" }}
-                    />
-                    <FaTimes
-                      onClick={() => handleReject(cur._id)}
-                      style={{ cursor: "pointer", color: "var(--error)" }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
+      <div className="dashboard-network glass-card">
+        <div className="network-tabs">
+          <button 
+            className={`network-tab ${activeTab === "friends" ? "active" : ""}`}
+            onClick={() => setActiveTab("friends")}
+          >
+            <FaUserFriends /> Friends ({showfriends.length})
+          </button>
+          <button 
+            className={`network-tab ${activeTab === "pending" ? "active" : ""}`}
+            onClick={() => setActiveTab("pending")}
+          >
+            <FaUserPlus /> Pending ({pending.length})
+            {pending.length > 0 && <span className="badge-dot" />}
+          </button>
+        </div>
+
+        <div className="network-content">
+          {activeTab === "friends" && (
+            <div className="network-grid">
+              {showfriends.length === 0 ? (
+                <p className="empty-network">You have no friends yet.</p>
+              ) : (
+                showfriends.map((cur) => {
+                  const friend = cur.sender?._id === user._id ? cur.recipient : cur.sender;
+                  return (
+                    <div key={cur._id} className="network-card">
+                      <img 
+                        src={friend.image && !friend.image.includes('undefined') ? friend.image : DEFAULT_IMAGE} 
+                        alt={friend.username} 
+                        onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+                      />
+                      <span className="network-name">{friend.username}</span>
+                      <button className="btn-danger-icon" onClick={() => handleUnfriend(cur._id)} title="Unfriend">
+                        <FaTimes />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           )}
 
-          <div className="section-title" onClick={toggleFriends}>
-            <span>Friends ({showfriends.length})</span>
-            <span>{showFriends ? "↑" : "↓"}</span>
-          </div>
-          {showFriends && (
-            <ul>
-              {showfriends.map((cur) => {
-                const friend = cur.sender._id === user._id ? cur.recipient : cur.sender;
-                return (
-                  <li key={cur._id} className="friend-item">
-                    <p>{friend.username}</p>
-                    <FaTimes
-                      onClick={() => handleUnfriend(cur._id)}
-                      style={{ cursor: "pointer", color: "var(--error)" }}
+          {activeTab === "pending" && (
+            <div className="network-grid">
+              {pending.length === 0 ? (
+                <p className="empty-network">No pending requests.</p>
+              ) : (
+                pending.map((cur) => (
+                  <div key={cur._id} className="network-card">
+                    <img 
+                      src={cur.sender.image && !cur.sender.image.includes('undefined') ? cur.sender.image : DEFAULT_IMAGE} 
+                      alt={cur.sender.username} 
+                      onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
                     />
-                  </li>
-                );
-              })}
-            </ul>
+                    <span className="network-name">{cur.sender.username}</span>
+                    <div className="network-actions">
+                      <button className="btn-success-icon" onClick={() => handleAccept(cur._id)}><FaCheck /></button>
+                      <button className="btn-danger-icon" onClick={() => handleReject(cur._id)}><FaTimes /></button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       </div>

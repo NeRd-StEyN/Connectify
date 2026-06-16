@@ -23,10 +23,11 @@ export const sendOtp = async (email) => {
 };
 
 // Verify OTP and reset password
-export const verifyOtp = async ({ otp, newPassword }) => {
-  const res = await axios.post(`${BASE_URL}/verify-otp`, { otp, newPassword });
+export const verifyOtp = async ({ email, otp, newPassword }) => {
+  const res = await axios.post(`${BASE_URL}/verify-otp`, { email, otp, newPassword });
   return res.data;
 };
+
 
 
 // Get logged-in user
