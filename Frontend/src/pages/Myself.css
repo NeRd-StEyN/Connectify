@@ -10,27 +10,13 @@
   min-height: 100vh;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 30px;
+.dashboard-header {
   width: 100%;
-  max-width: 1000px;
-}
-
-@media (max-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.profile-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 40px 20px;
   position: relative;
-  height: fit-content;
 }
 
 .profile-avatar-container {
@@ -67,34 +53,21 @@
   transform: scale(1.1);
 }
 
-.username-input {
-  font-size: 1.8rem;
+.profile-name {
+  font-size: 2rem;
   font-weight: 700;
-  text-align: center;
-  background: transparent;
-  border: 1px solid transparent;
-  color: white;
-  padding: 8px 15px;
-  border-radius: 8px;
-  width: 100%;
-  transition: all 0.3s ease;
+  margin-bottom: 25px;
 }
 
-.username-input:focus {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--primary);
-  outline: none;
-}
-
-.profile-edit-form {
+.profile-bio-editor {
   width: 100%;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  align-items: stretch;
+  gap: 15px;
 }
 
-.profile-edit-form textarea {
+.profile-bio-editor textarea {
   width: 100%;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--border);
@@ -106,7 +79,7 @@
   transition: border-color 0.3s;
 }
 
-.profile-edit-form textarea:focus {
+.profile-bio-editor textarea:focus {
   border-color: var(--primary);
   outline: none;
 }
@@ -156,13 +129,6 @@
 
 .logout-btn-dash:hover {
   background: rgba(239, 68, 68, 0.1);
-}
-
-.dashboard-network {
-  display: flex;
-  flex-direction: column;
-  height: fit-content;
-  min-height: 400px;
 }
 
 .dashboard-toast {
@@ -232,44 +198,44 @@
   gap: 15px;
 }
 
-
+.dashboard-network {
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+}
 
 .network-tabs {
   display: flex;
-  gap: 15px;
-  padding: 20px;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  background: rgba(18, 18, 18, 0.95);
-  backdrop-filter: blur(10px);
-  z-index: 10;
-  border-radius: 16px 16px 0 0;
 }
 
 .network-tab {
+  flex: 1;
   background: transparent;
   border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
+  padding: 20px;
+  color: var(--text-dim);
   font-weight: 600;
-  padding: 10px 20px;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
-  border-radius: 30px;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.network-tab:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+  justify-content: center;
+  gap: 10px;
+  position: relative;
 }
 
 .network-tab.active {
-  color: white;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.network-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
   background: var(--primary);
 }
 

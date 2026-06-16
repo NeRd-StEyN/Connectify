@@ -17,7 +17,6 @@ export const Myself = () => {
 
   const [user, setUser] = useState(cachedData?.user || null);
   const [loadingAction, setLoadingAction] = useState(false);
-  const [username, setUsername] = useState(cachedData?.user?.username || "");
   const [desc, setDesc] = useState(cachedData?.user?.description || "");
   const [image, setImage] = useState(cachedData?.user?.image || "");
   const [message, setMessage] = useState({ text: "", type: "" });
@@ -52,7 +51,6 @@ export const Myself = () => {
   useEffect(() => {
     if (myselfData && !cachedData) {
       setUser(myselfData.user);
-      setUsername(myselfData.user.username || "");
       setDesc(myselfData.user.description || "");
       setImage(myselfData.user.image || DEFAULT_IMAGE);
       setPending(myselfData.pending);
@@ -77,8 +75,7 @@ export const Myself = () => {
   const handleSave = async () => {
     try {
       setLoadingAction(true);
-      await axios.post(`${BASE_URL}/edituser`, { d: desc, n: username }, { withCredentials: true });
-      queryClient.invalidateQueries({ queryKey: ["myselfData"] });
+      await axios.post(`${BASE_URL}/edituser`, { d: desc, n: user.username }, { withCredentials: true });
       showMessage("Profile updated successfully");
     } catch (err) {
       console.error("Update failed", err);
@@ -196,50 +193,43 @@ export const Myself = () => {
         </div>
       )}
 
-      <div className="dashboard-grid">
-        <div className="profile-card glass-card">
-          <button className="btn-danger logout-btn-dash" onClick={handleLogoutAll}>
-            <FaSignOutAlt /> Log out
-          </button>
-          
-          <div className="profile-avatar-container">
-            <img
-              src={image && !image.includes('undefined') ? image : DEFAULT_IMAGE}
-              alt="Profile"
-              className="profile-avatar-large"
-              onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
-            />
-            <label htmlFor="fileInput" className="avatar-edit-overlay">
-              <FaCamera />
-            </label>
-            <input
-              id="fileInput"
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              style={{ display: "none" }}
-            />
-          </div>
-          
-          <div className="profile-edit-form">
-            <input 
-              type="text" 
-              className="username-input" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-            />
-            <textarea
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              placeholder="Tell us about yourself..."
-              rows={3}
-            />
-            <button className="btn-primary" onClick={handleSave} disabled={loadingAction}>
-              {loadingAction ? "Saving..." : <><FaSave /> Save Profile</>}
-            </button>
-          </div>
+      <div className="dashboard-header glass-card">
+        <div className="profile-avatar-container">
+          <img
+            src={image && !image.includes('undefined') ? image : DEFAULT_IMAGE}
+            alt="Profile"
+            className="profile-avatar-large"
+            onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+          />
+          <label htmlFor="fileInput" className="avatar-edit-overlay">
+            <FaCamera />
+          </label>
+          <input
+            id="fileInput"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
         </div>
+        <h1 className="profile-name">{user?.username}</h1>
+        
+        <div className="profile-bio-editor">
+          <textarea
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Tell us about yourself..."
+            rows={3}
+          />
+          <button className="btn-primary" onClick={handleSave} disabled={loadingAction}>
+            {loadingAction ? "Saving..." : <><FaSave /> Save Bio</>}
+          </button>
+        </div>
+
+        <button className="btn-danger logout-btn-dash" onClick={handleLogoutAll}>
+          <FaSignOutAlt /> Log out
+        </button>
+      </div>
 
       {showCropper && (
         <div className="cropper-modal-overlay">
@@ -341,7 +331,6 @@ export const Myself = () => {
               )}
             </div>
           )}
-        </div>
         </div>
       </div>
     </div>
