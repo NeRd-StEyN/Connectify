@@ -3,6 +3,7 @@ import axios from "axios";
 import "./chatbox.css";
 import { FaPaperclip, FaSmile, FaRegTimesCircle, FaPaperPlane, FaEllipsisV, FaReply, FaChevronDown, FaArrowDown, FaMicrophone, FaStop, FaImages, FaCheck, FaCheckDouble, FaTrash, FaSearch, FaTimes } from "react-icons/fa";
 import { IoSend } from "react-icons/io5";
+import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import { encryptText, decryptText } from "./encryption";
