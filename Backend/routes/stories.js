@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Story = require('../models/Story');
-const User = require('../models/User');
-const auth = require('./verifytoken');
+const User = require('../models/users');
+const auth = require('../middleware/auth');
 
 // Create a new story
 router.post('/story', auth, async (req, res) => {
