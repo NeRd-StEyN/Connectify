@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import "./chatbox.css";
-import { FaPaperclip, FaSmile, FaRegTimesCircle, FaPaperPlane, FaEllipsisV, FaReply, FaChevronDown, FaArrowDown, FaMicrophone, FaStop, FaImages, FaCheck, FaCheckDouble, FaTrash } from "react-icons/fa";
+import { FaPaperclip, FaSmile, FaRegTimesCircle, FaPaperPlane, FaEllipsisV, FaReply, FaChevronDown, FaArrowDown, FaMicrophone, FaStop, FaImages, FaCheck, FaCheckDouble, FaTrash, FaSearch, FaTimes } from "react-icons/fa";
 import { IoSend } from "react-icons/io5";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
