@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { FaArrowLeft } from "react-icons/fa";
 import { Skeleton, SkeletonCircle } from "../components/Skeleton";
@@ -12,28 +13,20 @@ const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 export const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const [profileUser, setProfileUser] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        const [userRes, postsRes] = await Promise.all([
-          axios.get(`${BASE_URL}/user/${userId}`, { withCredentials: true }),
-          axios.get(`${BASE_URL}/insta/user/${userId}`, { withCredentials: true })
-        ]);
-        setProfileUser(userRes.data);
-        setPosts(postsRes.data);
-      } catch (err) {
-        console.error("Failed to load user profile", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUserData();
-  }, [userId]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["userProfile", userId],
+    queryFn: async () => {
+      const [userRes, postsRes] = await Promise.all([
+        axios.get(`${BASE_URL}/user/${userId}`, { withCredentials: true }),
+        axios.get(`${BASE_URL}/insta/user/${userId}`, { withCredentials: true })
+      ]);
+      return { profileUser: userRes.data, posts: postsRes.data };
+    }
+  });
+
+  const profileUser = data?.profileUser;
+  const posts = data?.posts || [];
 
   if (loading) {
     return (

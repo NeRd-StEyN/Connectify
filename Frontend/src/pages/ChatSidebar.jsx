@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import axios from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import "./ChatSidebar.css";
 import { decryptText } from "./encryption";
 
@@ -25,13 +26,12 @@ function formatTime(timestamp) {
 }
 
 export const ChatSidebar = ({ user, setuser, onlineUsers }) => {
-  const [friends, setFriends] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
 
-  const fetchFriends = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: friends = [], isLoading } = useQuery({
+    queryKey: ["chatList", search],
+    queryFn: async () => {
       const res = await axios.post(
         `${BASE_URL}/getchatlist`,
         { search },
@@ -44,21 +44,12 @@ export const ChatSidebar = ({ user, setuser, onlineUsers }) => {
         }
         return f;
       });
-      setFriends(decryptedFriends);
-    } catch (err) {
-      console.error("Fetch friends failed", err);
-    } finally {
-      setLoading(false);
+      return decryptedFriends;
     }
-  }, [search]);
-
-  useEffect(() => {
-    const delay = setTimeout(fetchFriends, 300);
-    return () => clearTimeout(delay);
-  }, [fetchFriends]);
+  });
 
   // When a message is sent/received refresh list for last message update
-  const refreshList = () => fetchFriends();
+  const refreshList = () => queryClient.invalidateQueries({ queryKey: ["chatList"] });
 
   return (
     <div className="chat-sidebar">
@@ -75,7 +66,7 @@ export const ChatSidebar = ({ user, setuser, onlineUsers }) => {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="sidebar-skeleton-list">
           {Array(5).fill(0).map((_, i) => (
             <div key={i} className="sidebar-skeleton-item">
@@ -106,9 +97,9 @@ export const ChatSidebar = ({ user, setuser, onlineUsers }) => {
                 onClick={() => {
                   setuser(friend);
                   // Clear local unread count optimistically
-                  setFriends(prev => prev.map(f =>
-                    f._id === friend._id ? { ...f, unreadCount: 0 } : f
-                  ));
+                  queryClient.setQueryData(["chatList", search], (oldData) => 
+                    oldData ? oldData.map(f => f._id === friend._id ? { ...f, unreadCount: 0 } : f) : []
+                  );
                 }}
               >
                 <div className="chat-avatar-container">

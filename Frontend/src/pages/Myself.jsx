@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
 import { FaCamera, FaTimes, FaCheck, FaSave, FaUserFriends, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
@@ -11,11 +12,13 @@ const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
 
 export const Myself = () => {
-  const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const queryClient = useQueryClient();
+  const cachedData = queryClient.getQueryData(["myselfData"]);
+
+  const [user, setUser] = useState(cachedData?.user || null);
   const [loadingAction, setLoadingAction] = useState(false);
-  const [desc, setDesc] = useState("");
-  const [image, setImage] = useState("");
+  const [desc, setDesc] = useState(cachedData?.user?.description || "");
+  const [image, setImage] = useState(cachedData?.user?.image || "");
   const [message, setMessage] = useState({ text: "", type: "" });
 
   const [selectedFile, setSelectedFile] = useState(null);
@@ -25,33 +28,35 @@ export const Myself = () => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
 
-  const [pending, setPending] = useState([]);
-  const [showfriends, setShowFriends] = useState([]);
+  const [pending, setPending] = useState(cachedData?.pending || []);
+  const [showfriends, setShowFriends] = useState(cachedData?.friends || []);
   const [activeTab, setActiveTab] = useState("friends");
 
+  const { data: myselfData, isLoading: loadingUser } = useQuery({
+    queryKey: ["myselfData"],
+    queryFn: async () => {
+      const [userRes, pendingRes, friendsRes] = await Promise.all([
+        axios.get(`${BASE_URL}/get-user`, { withCredentials: true }),
+        pendingrequest(),
+        friends()
+      ]);
+      return {
+        user: userRes.data,
+        pending: pendingRes || [],
+        friends: friendsRes || []
+      };
+    }
+  });
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoadingUser(true);
-        const [userRes, pendingRes, friendsRes] = await Promise.all([
-          axios.get(`${BASE_URL}/get-user`, { withCredentials: true }),
-          pendingrequest(),
-          friends()
-        ]);
-        setUser(userRes.data);
-        setDesc(userRes.data.description || "");
-        setImage(userRes.data.image || DEFAULT_IMAGE);
-        setPending(pendingRes || []);
-        setShowFriends(friendsRes || []);
-      } catch (err) {
-        console.error("Failed to load profile data", err);
-        showMessage("Failed to load profile data", "error");
-      } finally {
-        setLoadingUser(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (myselfData && !cachedData) {
+      setUser(myselfData.user);
+      setDesc(myselfData.user.description || "");
+      setImage(myselfData.user.image || DEFAULT_IMAGE);
+      setPending(myselfData.pending);
+      setShowFriends(myselfData.friends);
+    }
+  }, [myselfData, cachedData]);
 
   useEffect(() => {
     if (selectedFile) {
