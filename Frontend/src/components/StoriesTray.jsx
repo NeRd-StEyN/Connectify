@@ -48,8 +48,13 @@ export const StoriesTray = () => {
       formData.append("file", compressedImage);
       formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-      const cloudRes = await axios.post("https://api.cloudinary.com/v1_1/dwzvlijky/image/upload", formData);
-      const imageUrl = cloudRes.data.secure_url;
+      const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dwzvlijky/image/upload", {
+        method: "POST",
+        body: formData
+      });
+      const uploadData = await cloudRes.json();
+      if (uploadData.error) throw new Error(uploadData.error.message);
+      const imageUrl = uploadData.secure_url;
 
       // 3. Save to backend
       await axios.post(`${BASE_URL}/story`, { image: imageUrl }, { withCredentials: true });
