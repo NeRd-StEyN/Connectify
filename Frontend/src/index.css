@@ -122,7 +122,8 @@ img {
 @media (max-width: 768px) {
   .page-content {
     margin-left: 0;
-    padding-bottom: var(--sidebar-width-mobile);
+    height: calc(100vh - var(--sidebar-width-mobile));
+    padding-bottom: 0;
   }
 }
 
@@ -149,6 +150,10 @@ button {
   cursor: pointer;
   font-family: inherit;
   transition: all var(--transition);
+}
+
+button:active {
+  transform: scale(0.95);
 }
 
 .btn-primary {

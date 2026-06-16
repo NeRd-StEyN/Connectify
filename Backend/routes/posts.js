@@ -50,6 +50,19 @@ router.get('/myposts', auth, async (req, res) => {
   }
 });
 
+// Get User's Posts by ID
+router.get('/user/:userId', auth, async (req, res) => {
+  try {
+    const posts = await Post.find({ user: req.params.userId })
+      .populate('user', 'username image')
+      .populate('comments.user', 'username image')
+      .sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: 'Could not fetch user posts' });
+  }
+});
+
 // Edit Post
 router.put('/post/:id', auth, async (req, res) => {
   const { caption, image } = req.body;

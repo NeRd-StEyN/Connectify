@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import "./chatbox.css";
+import { FaPaperclip, FaSmile, FaRegTimesCircle, FaPaperPlane, FaEllipsisV, FaReply, FaChevronDown, FaArrowDown, FaMicrophone, FaStop, FaImages, FaCheck, FaCheckDouble, FaTrash } from "react-icons/fa";
 import { IoSend } from "react-icons/io5";
-import { FaSmile, FaImages, FaReply, FaTrash, FaSearch, FaTimes, FaCheck, FaCheckDouble } from "react-icons/fa";
-import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import { encryptText, decryptText } from "./encryption";
+import { compressImage } from "../utils/imageCompression";
 
 const BASE_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 const DEFAULT_IMAGE = `${BASE_URL}/default-photo.png`;
@@ -49,7 +49,15 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [contextMenu, setContextMenu] = useState(null); // { x, y, messageId, isMine }
-  const [reactionPicker, setReactionPicker] = useState(null); // messageId
+  const [reactionPicker, setReactionPicker] = useState(null);
+
+  // Audio Recording States
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
   const [hasMore, setHasMore] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [scrollAtBottom, setScrollAtBottom] = useState(true);
@@ -211,24 +219,77 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
   };
 
   // ── Image upload ───────────────────────────────────────────
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setImage(reader.result);
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file, 800, 800, 0.7);
+        setImage(compressedBase64);
+      } catch (err) {
+        console.error("Compression failed", err);
+      }
     }
     e.target.value = null;
+  };
+
+  // ── Audio Recording ──────────────────────────────────────────
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        setAudioBlob(audioBlob);
+        setAudioUrl(URL.createObjectURL(audioBlob));
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Microphone access denied or error:", err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+    setAudioBlob(null);
+    setAudioUrl(null);
   };
 
   // ── Send ───────────────────────────────────────────────────
   const sendMessage = async () => {
     const trimmed = text.trim();
-    if (!trimmed && !image) return;
+    if (!trimmed && !image && !audioBlob) return;
 
     if (socket) socket.emit("stop-typing", { to: friend._id, from: userId });
 
-    const encryptedText = encryptText(trimmed);
+    const encryptedText = trimmed ? encryptText(trimmed) : "";
+
+    let audioBase64 = null;
+    if (audioBlob) {
+      audioBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(audioBlob);
+      });
+    }
 
     const optimisticMsg = {
       _id: `temp_${Date.now()}`,
@@ -236,6 +297,7 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
       recipient: friend._id,
       content: trimmed,
       image,
+      audio: audioBase64,
       timestamp: new Date(),
       read: false,
       replyTo: replyTo || null,
@@ -245,6 +307,8 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
     setMessages((prev) => [...prev, optimisticMsg]);
     setText("");
     setImage(null);
+    setAudioBlob(null);
+    setAudioUrl(null);
     setReplyTo(null);
     setScrollAtBottom(true);
 
@@ -255,6 +319,7 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
           recipientId: friend._id,
           content: encryptedText,
           image,
+          audio: audioBase64,
           replyTo: replyTo?._id || null,
         },
         { withCredentials: true }
@@ -481,6 +546,9 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
                         {msg.image && (
                           <img src={msg.image} className="msg-image" alt="sent" />
                         )}
+                        {msg.audio && (
+                          <audio src={msg.audio} controls className="msg-audio" />
+                        )}
                         {decrypted && <p>{decrypted}</p>}
                       </>
                     )}
@@ -600,6 +668,14 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
         </div>
       )}
 
+      {/* Audio preview */}
+      {audioUrl && !isRecording && (
+        <div className="audio-preview-bar">
+          <audio src={audioUrl} controls className="audio-preview" />
+          <button onClick={cancelRecording}><FaTimes /></button>
+        </div>
+      )}
+
       {/* Input */}
       <div className="chat-input-bar">
         <label htmlFor="sendimage" className="input-icon-btn" title="Send image">
@@ -631,22 +707,38 @@ export const ChatBox = ({ friend, socket, typingUsers, onBack }) => {
           </div>
         )}
 
-        <input
-          value={text}
-          className="chat-text-input"
-          onChange={handleTyping}
-          placeholder="Type a message..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              sendMessage();
-            }
-          }}
-        />
+        {isRecording ? (
+          <div className="recording-indicator">
+            <span className="recording-pulse"></span>
+            <span>Recording audio...</span>
+            <button className="stop-record-btn" onClick={stopRecording}>
+              <FaStop />
+            </button>
+          </div>
+        ) : (
+          <input
+            value={text}
+            className="chat-text-input"
+            onChange={handleTyping}
+            placeholder="Type a message..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+          />
+        )}
 
-        <button className="send-btn" onClick={sendMessage} disabled={!text.trim() && !image}>
-          <IoSend />
-        </button>
+        {!text.trim() && !image && !audioBlob && !isRecording ? (
+          <button className="mic-btn" onClick={startRecording} title="Record voice message">
+            <FaMicrophone />
+          </button>
+        ) : (
+          <button className="send-btn" onClick={sendMessage} disabled={(!text.trim() && !image && !audioBlob) || isRecording}>
+            <IoSend />
+          </button>
+        )}
       </div>
 
       {/* Context menu */}

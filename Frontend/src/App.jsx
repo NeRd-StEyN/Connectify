@@ -6,6 +6,7 @@ import { Myself } from "./pages/Myself";
 import { Chat } from "./pages/Chat";
 import { Search } from "./pages/Search";
 import { Settings } from "./pages/Settings";
+import { UserProfile } from "./pages/UserProfile";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 const router = createBrowserRouter([
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "insta", element: <Insta /> },
       { path: "myself", element: <Myself /> },
       { path: "settings", element: <Settings /> },
+      { path: "user/:userId", element: <UserProfile /> },
 
       // Catch invalid sub-routes
       { path: "search/*", element: <Navigate to="/search" replace /> },

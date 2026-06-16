@@ -92,12 +92,13 @@ router.post('/getchatlist', auth, async (req, res) => {
 // ──────────────────────────────────────────────────────────────
 router.post('/send-message', auth, async (req, res) => {
   try {
-    const { recipientId, content, image, replyTo } = req.body;
+    const { recipientId, content, image, audio, replyTo } = req.body;
     const newMessage = await Message.create({
       sender: req.user._id,
       recipient: recipientId,
       content: content || '',
       image: image || undefined,
+      audio: audio || undefined,
       replyTo: replyTo || null,
     });
 

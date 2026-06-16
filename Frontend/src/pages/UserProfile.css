@@ -1,0 +1,127 @@
+.user-profile-container {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+  gap: 24px;
+}
+
+.user-profile-nav {
+  display: flex;
+  margin-bottom: -10px;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.user-profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 16px;
+}
+
+.user-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--primary);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+}
+
+.user-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.user-bio {
+  font-size: 1rem;
+  color: var(--text-dim);
+  max-width: 400px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.user-stats {
+  display: flex;
+  gap: 32px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--glass-border);
+  width: 100%;
+  justify-content: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.user-posts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.user-post-card {
+  width: 100%;
+}
+
+.error-state {
+  text-align: center;
+  padding: 64px 24px;
+}
+
+.error-state h2 {
+  font-size: 1.5rem;
+  color: var(--error);
+  margin-bottom: 16px;
+}
+
+.error-state button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}

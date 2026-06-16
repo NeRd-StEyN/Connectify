@@ -8,6 +8,18 @@
   width: 100%;
 }
 
+.feed-header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.feed-header-user:hover .feed-username {
+  text-decoration: underline;
+}
+
 .feed-tabs {
   display: flex;
   gap: 20px;

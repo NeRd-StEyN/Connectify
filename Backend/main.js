@@ -129,11 +129,14 @@ app.use("/login", authLimiter);
 app.use("/signup", authLimiter);
 app.use("/forgot-password", authLimiter);
 
+const storyRoutes = require("./routes/stories");
+
 app.use("/", authRoutes);
 app.use("/", userRoutes);
 app.use("/", friendRoutes);
 app.use("/", chatRoutes);
 app.use("/", notificationRoutes);
+app.use("/", storyRoutes);
 app.use("/insta", postLimiter, postRoutes);
 
 // --- GLOBAL ERROR HANDLER ---

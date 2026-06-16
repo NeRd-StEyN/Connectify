@@ -5,6 +5,7 @@ const messageSchema = new mongoose.Schema({
   recipient: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   content:   { type: String, default: "" },
   image:     { type: String },
+  audio:     { type: String },
 
   // Read receipts
   read:      { type: Boolean, default: false },
