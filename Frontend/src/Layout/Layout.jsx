@@ -1,6 +1,5 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./sidebar"; 
-import { Toast } from "../components/Toast";
 import { useSocket } from "../hooks/useSocket";
 
 export const Layout = () => {
@@ -13,7 +12,6 @@ export const Layout = () => {
       <div className="page-content">
         <Outlet />
       </div>
-      <Toast socket={socket} />
     </div>
   );
 };

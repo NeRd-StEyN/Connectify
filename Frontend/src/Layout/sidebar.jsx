@@ -1,7 +1,6 @@
 import "./sidebar.css";
 import { FaRocketchat, FaInstagram, FaSearch, FaUser, FaCog } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
-import { NotificationBell } from "../components/NotificationBell";
 import { useSocket } from "../hooks/useSocket";
 import { useTheme } from "../context/ThemeContext";
 import { FiSun, FiMoon } from "react-icons/fi";
@@ -47,10 +46,6 @@ export const Sidebar = () => {
         </div>
 
         <div className="sidebar-bottom">
-          <div className="nav-item" style={{ padding: 0, background: "none" }}>
-            <NotificationBell socket={socket} />
-            <span className="nav-text" style={{ marginLeft: "-5px", fontWeight: 500 }}>Notifications</span>
-          </div>
           <button className="theme-toggle-sidebar" onClick={toggleTheme} title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
             {theme === "dark" ? <FiSun /> : <FiMoon />}
             <span className="nav-text">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
